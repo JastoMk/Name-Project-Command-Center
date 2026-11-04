@@ -58,7 +58,7 @@ class DashboardMobileAccessibilityTests(unittest.TestCase):
             "https://github.com/JastoMk/operation-golden-shield/actions/runs/41788531719",
             SOURCE,
         )
-        self.assertIn("2027-05-03", SOURCE)
+        self.assertIn("3 may 2027", SOURCE.lower())
         self.assertIn("no forward results yet", SOURCE.lower())
         self.assertIn("research only", SOURCE.lower())
         self.assertIn("paper only", SOURCE.lower())
