@@ -60,6 +60,8 @@ class DashboardMobileAccessibilityTests(unittest.TestCase):
         )
         self.assertIn("2027-05-03", SOURCE)
         self.assertIn("no forward results yet", SOURCE.lower())
+        self.assertIn("research only", SOURCE.lower())
+        self.assertIn("paper only", SOURCE.lower())
 
 
 if __name__ == "__main__":
