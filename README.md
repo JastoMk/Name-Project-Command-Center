@@ -15,7 +15,7 @@ A lightweight, mobile-first static dashboard for tracking the project portfolio.
 The dashboard is a manually curated snapshot. Status labels are updated only after checking the relevant repository, workflow, or test result. A successful hosted runner means the repository health-check workflow ran; it does **not** mean the project is complete or an autonomous AI agent is operating.
 
 Current baseline:
-- Golden Shield: research code exists; runner passed; strategy profitability is not established; live execution is disabled.
+- Golden Shield: Binance foundation is in draft PR #18; 95 unit tests passed, including 8 Binance exchange-rule tests. Market-data adapter, fee-aware paper simulation and out-of-sample validation remain; profitability is not established and live execution is disabled.
 - MyBiopure: runner scaffold exists; storefront implementation remains pending; initial budget R0.
 - ARTEMIS: runner scaffold exists; Android automation implementation and device tests remain pending.
 - Polymarket Intelligence: planning only; no repository or runner configured.
