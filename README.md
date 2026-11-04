@@ -1,20 +1,29 @@
 # Project Command Center
 
-A lightweight, mobile-first static dashboard for tracking the user's project portfolio.
+A lightweight, mobile-first static dashboard for tracking the project portfolio.
 
-## Hosting
+## Repository privacy and delivery
 
-This repository is public and can use GitHub Pages on GitHub Free. The workflow in `.github/workflows/deploy-pages.yml` deploys the root directory on pushes to `main` and manual dispatches.
+This repository is intentionally **private**. Keep it private.
 
-If GitHub Pages is not already enabled, open **Settings → Pages** and set **Build and deployment → Source** to **GitHub Actions**. Then check the Actions tab for the deployment result.
+GitHub Pages on GitHub Free requires a public repository. Publishing this dashboard from a private repository would require an eligible paid plan, so Pages deployment is not enabled. Do not make this repository public merely to host the dashboard.
 
-## Important limitations
+The dashboard is plain HTML/CSS/JavaScript and can be opened locally in a mobile browser after saving `index.html`. It has no backend, package dependencies, or network requirement for its basic interface.
 
-- This is a static dashboard. It does not yet query private repositories or display live workflow states.
-- The task checkboxes are saved in the current browser only.
-- Project status text is a manually curated baseline and must be updated only after verification.
-- Never commit credentials, personal account data, broker details, API keys, or secrets here.
+## Current integration status
+
+- Three GitHub-hosted runner workflows are installed in Golden Shield, MyBiopure, and ARTEMIS.
+- Each runner passed its initial health-check execution.
+- The dashboard currently displays a manually verified snapshot; it does not yet query private repository APIs or update statuses live.
+- Polymarket Intelligence remains at planning stage and has no repository or runner.
+- Task checkboxes are saved only in the current browser on the current device.
+
+## Safety
+
+- Never commit credentials, personal account data, broker details, API keys, or secrets.
+- Golden Shield is research-only; no live broker execution is connected.
+- Do not describe scheduled health checks as autonomous AI agents.
 
 ## Cost
 
-No external service, database, framework, or package installation is required. GitHub Pages hosting for public repositories is available on GitHub Free.
+No external service, database, framework, or package installation is required for the local dashboard.
