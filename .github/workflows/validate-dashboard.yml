@@ -42,3 +42,5 @@ jobs:
           print("Dashboard HTML parsed successfully.")
           print("Required project cards, privacy notes and safety labels are present.")
           PY
+      - name: Run dashboard regression tests
+        run: python -m unittest discover -s tests -v
