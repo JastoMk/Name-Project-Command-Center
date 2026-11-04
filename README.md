@@ -2,28 +2,30 @@
 
 A lightweight, mobile-first static dashboard for tracking the project portfolio.
 
-## Repository privacy and delivery
+## Repository and hosting status
 
-This repository is intentionally **private**. Keep it private.
+- This repository is **private** by design.
+- The dashboard source is `index.html`; it is a static page with no backend or external dependencies.
+- The previous GitHub Pages deployment attempt failed during `Configure GitHub Pages`. The current account/repository configuration does not have a verified Pages deployment.
+- No public dashboard URL is claimed or published.
+- Keep the source private. A hosting provider that supports private Git integration must be explicitly selected and connected before deployment.
 
-GitHub Pages on GitHub Free requires a public repository. Publishing this dashboard from a private repository would require an eligible paid plan, so Pages deployment is not enabled. Do not make this repository public merely to host the dashboard.
+## Project status policy
 
-The dashboard is plain HTML/CSS/JavaScript and can be opened locally in a mobile browser after saving `index.html`. It has no backend, package dependencies, or network requirement for its basic interface.
+The dashboard is a manually curated snapshot. Status labels are updated only after checking the relevant repository, workflow, or test result. A successful hosted runner means the repository health-check workflow ran; it does **not** mean the project is complete or an autonomous AI agent is operating.
 
-## Current integration status
+Current baseline:
+- Golden Shield: research code exists; runner passed; strategy profitability is not established; live execution is disabled.
+- MyBiopure: runner scaffold exists; storefront implementation remains pending; initial budget R0.
+- ARTEMIS: runner scaffold exists; Android automation implementation and device tests remain pending.
+- Polymarket Intelligence: planning only; no repository or runner configured.
 
-- Three GitHub-hosted runner workflows are installed in Golden Shield, MyBiopure, and ARTEMIS.
-- Each runner passed its initial health-check execution.
-- The dashboard currently displays a manually verified snapshot; it does not yet query private repository APIs or update statuses live.
-- Polymarket Intelligence remains at planning stage and has no repository or runner.
-- Task checkboxes are saved only in the current browser on the current device.
+## Automation
 
-## Safety
+The workflow in `.github/workflows/deploy-pages.yml` is now a private-source validation check only. It does not attempt a Pages deployment. It runs on pushes to `main` and manual dispatch.
 
-- Never commit credentials, personal account data, broker details, API keys, or secrets.
-- Golden Shield is research-only; no live broker execution is connected.
-- Do not describe scheduled health checks as autonomous AI agents.
+## Security and cost
 
-## Cost
-
-No external service, database, framework, or package installation is required for the local dashboard.
+- No credentials, API keys, broker details, account balances, or private trading data belong in this repository.
+- No external service, database, package installation, or paid hosting is required to edit and validate the static source.
+- Deployment is intentionally pending a compatible private-repository hosting choice.
