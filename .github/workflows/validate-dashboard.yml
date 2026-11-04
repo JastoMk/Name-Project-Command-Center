@@ -1,0 +1,41 @@
+name: Validate Private Command Center
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: command-center-validation
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate dashboard content
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class DashboardParser(HTMLParser):
+              pass
+
+          source = Path("index.html").read_text(encoding="utf-8")
+          DashboardParser().feed(source)
+          required = [
+              "Project Command Center",
+              "Operation Golden Shield",
+              "MyBiopure",
+              "ARTEMIS",
+              "Polymarket Intelligence",
+              "private",
+              "live execution",
+          ]
+          missing = [item for item in required if item.lower() not in source.lower()]
+          assert not missing, f"Missing dashboard content: {missing}"
+          print("Dashboard HTML parsed successfully.")
+          print("Required project cards and safety labels are present.")
+          PY
