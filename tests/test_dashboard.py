@@ -49,5 +49,18 @@ class DashboardMobileAccessibilityTests(unittest.TestCase):
         self.assertIn("outline-offset:3px", SOURCE)
 
 
+    def test_golden_shield_card_links_current_research_and_holdout_status(self):
+        self.assertIn(
+            "https://github.com/JastoMk/operation-golden-shield/pull/19",
+            SOURCE,
+        )
+        self.assertIn(
+            "https://github.com/JastoMk/operation-golden-shield/actions/runs/41788531719",
+            SOURCE,
+        )
+        self.assertIn("2027-05-03", SOURCE)
+        self.assertIn("no forward results yet", SOURCE.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
