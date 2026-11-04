@@ -22,10 +22,10 @@ Current baseline:
 
 ## Automation
 
-A separate workflow, `.github/workflows/validate-dashboard.yml`, validates the HTML and required safety labels on pushes to `main` and manual dispatch. The older Pages workflow still fails at the Pages configuration step and has not been successfully deployed; its removal/disablement remains outstanding.
+A separate workflow, `.github/workflows/validate-dashboard.yml`, validates the HTML and required safety labels on pushes to `main` and manual dispatch. The old Pages deployment workflow file has been removed from the current branch. Historical failed/cancelled runs remain in Actions history, but no active Pages deployment workflow is configured.
 
 ## Security and cost
 
 - No credentials, API keys, broker details, account balances, or private trading data belong in this repository.
 - No external service, database, package installation, or paid hosting is required to edit and validate the static source.
-- Deployment is intentionally pending a compatible private-repository hosting choice.
+- Deployment is intentionally pending a compatible private-repository hosting choice. The connected Vercel account did not expose an available team/project context during the latest check, so no deployment was attempted.
