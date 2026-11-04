@@ -22,7 +22,7 @@ Current baseline:
 
 ## Automation
 
-The workflow in `.github/workflows/deploy-pages.yml` is now a private-source validation check only. It does not attempt a Pages deployment. It runs on pushes to `main` and manual dispatch.
+A separate workflow, `.github/workflows/validate-dashboard.yml`, validates the HTML and required safety labels on pushes to `main` and manual dispatch. The older Pages workflow still fails at the Pages configuration step and has not been successfully deployed; its removal/disablement remains outstanding.
 
 ## Security and cost
 
