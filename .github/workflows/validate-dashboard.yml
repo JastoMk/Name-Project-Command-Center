@@ -32,10 +32,11 @@ jobs:
               "ARTEMIS",
               "Polymarket Intelligence",
               "private",
-              "live execution",
+              "research only",
+              "deployment pending",
           ]
           missing = [item for item in required if item.lower() not in source.lower()]
           assert not missing, f"Missing dashboard content: {missing}"
           print("Dashboard HTML parsed successfully.")
-          print("Required project cards and safety labels are present.")
+          print("Required project cards, privacy notes and safety labels are present.")
           PY
