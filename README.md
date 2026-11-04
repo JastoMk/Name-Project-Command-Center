@@ -22,7 +22,13 @@ Current baseline:
 
 ## Automation
 
-A separate workflow, `.github/workflows/validate-dashboard.yml`, validates the HTML and required safety labels on pushes to `main` and manual dispatch. The old Pages deployment workflow file has been removed from the current branch. Historical failed/cancelled runs remain in Actions history, but no active Pages deployment workflow is configured.
+A separate workflow, `.github/workflows/validate-dashboard.yml`, validates the HTML and required safety labels on pushes to `main`, pull requests targeting `main`, and manual dispatch. It also runs standard-library dashboard regression tests. The old Pages deployment workflow file has been removed from the current branch. Historical failed/cancelled runs remain in Actions history, but no active Pages deployment workflow is configured.
+
+## Mobile accessibility
+
+- Project filter controls have a 44px minimum touch height and expose their selected state through `aria-pressed`.
+- Visible focus outlines support keyboard navigation for links, buttons, and task controls.
+- Regression tests use only Python's standard library.
 
 ## Security and cost
 
