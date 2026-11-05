@@ -30,9 +30,10 @@ jobs:
           const fs = require('node:fs');
           const html = fs.readFileSync('index.html', 'utf8');
           if (!/^<!doctype html>/i.test(html.trimStart())) throw new Error('Missing HTML5 doctype');
-          const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)];
-          if (scripts.length !== 1) throw new Error('Expected exactly one inline application script');
-          fs.writeFileSync('/tmp/dashboard-inline.js', scripts[0][1]);
+          const scripts = [...html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)];
+          const inlineScripts = scripts.filter(match => !/\bsrc\s*=/.test(match[1]));
+          if (inlineScripts.length !== 1) throw new Error('Expected exactly one inline application script (external widgets are allowed)');
+          fs.writeFileSync('/tmp/dashboard-inline.js', inlineScripts[0][2]);
           const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]);
           const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
           if (duplicates.length) throw new Error('Duplicate element IDs: ' + [...new Set(duplicates)].join(', '));
