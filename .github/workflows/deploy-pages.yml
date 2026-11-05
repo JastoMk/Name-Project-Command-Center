@@ -22,10 +22,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
+      # GitHub Pages must first be enabled in Settings > Pages.
+      # Do not try to create/enable the Pages site from this workflow:
+      # that requires an admin API permission unavailable to this runner token.
       - name: Upload static dashboard
         uses: actions/upload-pages-artifact@v3
         with:

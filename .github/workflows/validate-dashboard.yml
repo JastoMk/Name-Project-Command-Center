@@ -1,6 +1,8 @@
-name: Validate Private Command Center
+name: Validate Command Center Dashboard
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
@@ -14,29 +16,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate dashboard content
+      - name: Validate dashboard HTML and live-market components
         run: |
           python - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
 
           class DashboardParser(HTMLParser):
-              pass
+              def __init__(self):
+                  super().__init__()
+                  self.tags = set()
+                  self.ids = set()
+              def handle_starttag(self, tag, attrs):
+                  self.tags.add(tag.lower())
+                  self.ids.update(value for key, value in attrs if key.lower() == "id")
 
           source = Path("index.html").read_text(encoding="utf-8")
-          DashboardParser().feed(source)
-          required = [
-              "Project Command Center",
+          parser = DashboardParser()
+          parser.feed(source)
+          parser.close()
+
+          assert {"html", "head", "body", "script"}.issubset(parser.tags), "Missing core HTML structure"
+          required_ids = {"signalCard", "tvChart", "coinRows", "marketFeedState", "refresh"}
+          missing = sorted(required_ids - parser.ids)
+          assert not missing, f"Missing dashboard elements: {missing}"
+
+          required_features = [
+              "api.binance.com",
+              "LIVE MARKET EXPLORER",
               "Operation Golden Shield",
-              "MyBiopure",
-              "ARTEMIS",
-              "Polymarket Intelligence",
-              "private",
               "research only",
-              "deployment pending",
+              "No API keys",
           ]
-          missing = [item for item in required if item.lower() not in source.lower()]
-          assert not missing, f"Missing dashboard content: {missing}"
+          missing_features = [item for item in required_features if item.lower() not in source.lower()]
+          assert not missing_features, f"Missing expected dashboard features/safety labels: {missing_features}"
+
+          assert "secret_key" not in source.lower() and "api_secret" not in source.lower(), "Potential credential string found"
           print("Dashboard HTML parsed successfully.")
-          print("Required project cards, privacy notes and safety labels are present.")
+          print("Signal panel, chart, top-100 market table, Binance feed and safety labels verified.")
           PY
