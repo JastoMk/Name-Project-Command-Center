@@ -20,6 +20,19 @@ A lightweight, mobile-first static market dashboard.
 - Gold chart display is not a validated XAUUSDc trading signal. The crypto model is not calibrated for gold.
 - Research only. No live broker execution.
 
+## Golden Shield snapshot connection
+
+The dashboard has a separate **Operation Golden Shield** panel. It reads only the published file `data/shield-latest.json`; it does not connect directly to the private Shield repository or call the Shield API from a browser.
+
+The private Shield repository can publish an hourly read-only snapshot for BTC, ETH and SOL through GitHub Actions. To activate that bridge:
+
+1. Create a fine-grained GitHub personal access token restricted to **JastoMk/Name-Project-Command-Center** only, with **Contents: Read and write** permission. Do not grant access to other repositories.
+2. In the private `JastoMk/operation-golden-shield` repository, open **Settings → Secrets and variables → Actions → New repository secret**.
+3. Save the token as `COMMAND_CENTER_PUBLISH_TOKEN`. Never paste the token into chat or commit it to a file.
+4. Run the Shield workflow **Publish Golden Shield research snapshot to Command Center** once from its Actions tab. It then runs hourly.
+
+The snapshot contains categorical BUY/SELL/WAIT research assessments, confidence labels, weighted scores, reasons, warnings and completed-candle timeframe readings. It does **not** contain a numeric probability, entry, stop-loss, take-profit or gold/XAUUSDc signal. The dashboard polls the published snapshot every minute and flags snapshots older than two hours.
+
 ## Zero-budget operating model
 
 - Static dashboard hosting: GitHub Pages.
