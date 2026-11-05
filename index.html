@@ -152,7 +152,7 @@ async function refreshGoldenShieldSnapshot(){
   const container=document.getElementById('shieldSnapshotCards');
   try{
     const response=await fetch('./data/shield-latest.json?ts='+Date.now(),{cache:'no-store'});
-    if(!response.ok)throw new Error('Snapshot not published yet (HTTP '+response.status+').');
+    if(!response.ok)throw new Error(response.status===404?'No Shield snapshot has been published yet. The private Shield repository still needs COMMAND_CENTER_PUBLISH_TOKEN configured, then its publisher workflow must run.':'Snapshot request failed (HTTP '+response.status+').');
     const snapshot=await response.json();
     if(!snapshot.ok||!Array.isArray(snapshot.signals))throw new Error('Snapshot format is invalid.');
     const generated=new Date(snapshot.generated_at);
