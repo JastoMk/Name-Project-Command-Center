@@ -168,9 +168,15 @@ async function refreshGoldenShieldSnapshot(){
       card.style.cssText='display:block;padding:14px;border:1px solid var(--line);border-radius:12px;min-width:0';
       const title=document.createElement('div');title.className='eyebrow';title.textContent=signal.symbol||'Unknown symbol';
       const decision=document.createElement('div');decision.style.cssText='font-size:24px;font-weight:800;margin:7px 0';decision.textContent=signal.decision||'UNAVAILABLE';
-      const meta=document.createElement('div');meta.className='sub';meta.textContent='Confidence: '+(signal.confidence||'none')+' · Weighted score: '+(signal.weighted_score??'—');
+      const meta=document.createElement('div');meta.className='sub';meta.textContent='Confidence label: '+(signal.confidence||'none')+' · Evidence grade: '+(signal.signal_grade||'not graded')+' · Score: '+(signal.weighted_score??'—');
+      const regime=document.createElement('div');regime.className='sub';regime.textContent='Market regime: '+String(signal.regime||'unavailable').replaceAll('_',' ');
       const price=document.createElement('div');price.className='sub';price.textContent=Number.isFinite(signal.price)?'Last price: '+signal.price.toLocaleString():'Price unavailable';
-      card.append(title,decision,meta,price);
+      card.append(title,decision,meta,regime,price);
+      if(Array.isArray(signal.timeframes)&&signal.timeframes.length){
+        const structure=document.createElement('div');structure.className='sub';
+        structure.textContent='Structure: '+signal.timeframes.map(item=>item.timeframe+' '+(item.structure||'—')).join(' · ');
+        card.append(structure);
+      }
       for(const reason of (signal.reasons||[])){
         const line=document.createElement('p');line.className='footnote';line.textContent=reason;card.append(line);
       }
