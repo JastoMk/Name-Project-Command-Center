@@ -7,14 +7,14 @@ A lightweight, mobile-first static market dashboard.
 - This repository is **public** on GitHub. Do not place credentials, account balances, broker information, or private project data here.
 - The separate `JastoMk/operation-golden-shield` repository is currently **private**.
 - The dashboard source is `index.html`; it is a static page and does not require a paid backend.
-- GitHub Pages deployment is not yet verified. The previous workflow failed because it attempted to enable/create the Pages site through a workflow token that lacked the required administrative API permission.
-- To deploy for free, enable GitHub Pages once in **Settings → Pages → Build and deployment → Source → GitHub Actions**. Then run the deployment workflow or push to `main`.
-- A published GitHub Pages site is publicly accessible. The dashboard currently uses public Binance market endpoints and has no private API credentials.
+- GitHub Pages is enabled and the latest deployment completed successfully. Pushes to `main` trigger the deployment workflow.
+- Public market requests try `data-api.binance.vision` first and fall back to `api.binance.com`, with request timeouts to avoid indefinite loading.
+- A published GitHub Pages site is publicly accessible. The dashboard uses public Binance market endpoints and has no private API credentials.
 
 ## Dashboard capabilities and limitations
 
 - Binance public REST market data; no API keys required.
-- Top 100 eligible USDT spot markets, refreshed periodically.
+- Top 100 eligible USDT spot markets, refreshed every 30 seconds when the public feed is reachable.
 - TradingView chart embed, including an XAU/USD chart view.
 - The browser-side crypto signal calculator and backtest are separate from the private Golden Shield engine. They must not be represented as Golden Shield output until an authenticated, tested data bridge is implemented.
 - Gold chart display is not a validated XAUUSDc trading signal. The crypto model is not calibrated for gold.
