@@ -1,31 +1,34 @@
 # Project Command Center
 
-A lightweight, mobile-first static dashboard for tracking the project portfolio.
+A lightweight, mobile-first static market dashboard.
 
 ## Repository and hosting status
 
-- This repository is **private** by design.
-- The dashboard source is `index.html`; it is a static page with no backend or external dependencies.
-- The previous GitHub Pages deployment attempt failed during `Configure GitHub Pages`. The current account/repository configuration does not have a verified Pages deployment.
-- No public dashboard URL is claimed or published.
-- Keep the source private. A hosting provider that supports private Git integration must be explicitly selected and connected before deployment.
+- This repository is **public** on GitHub. Do not place credentials, account balances, broker information, or private project data here.
+- The separate `JastoMk/operation-golden-shield` repository is currently **private**.
+- The dashboard source is `index.html`; it is a static page and does not require a paid backend.
+- GitHub Pages deployment is not yet verified. The previous workflow failed because it attempted to enable/create the Pages site through a workflow token that lacked the required administrative API permission.
+- To deploy for free, enable GitHub Pages once in **Settings → Pages → Build and deployment → Source → GitHub Actions**. Then run the deployment workflow or push to `main`.
+- A published GitHub Pages site is publicly accessible. The dashboard currently uses public Binance market endpoints and has no private API credentials.
 
-## Project status policy
+## Dashboard capabilities and limitations
 
-The dashboard is a manually curated snapshot. Status labels are updated only after checking the relevant repository, workflow, or test result. A successful hosted runner means the repository health-check workflow ran; it does **not** mean the project is complete or an autonomous AI agent is operating.
+- Binance public REST market data; no API keys required.
+- Top 100 eligible USDT spot markets, refreshed periodically.
+- TradingView chart embed, including an XAU/USD chart view.
+- The browser-side crypto signal calculator and backtest are separate from the private Golden Shield engine. They must not be represented as Golden Shield output until an authenticated, tested data bridge is implemented.
+- Gold chart display is not a validated XAUUSDc trading signal. The crypto model is not calibrated for gold.
+- Research only. No live broker execution.
 
-Current baseline:
-- Golden Shield: research code exists; runner passed; strategy profitability is not established; live execution is disabled.
-- MyBiopure: runner scaffold exists; storefront implementation remains pending; initial budget R0.
-- ARTEMIS: runner scaffold exists; Android automation implementation and device tests remain pending.
-- Polymarket Intelligence: planning only; no repository or runner configured.
+## Zero-budget operating model
 
-## Automation
+- Static dashboard hosting: GitHub Pages.
+- Validation and scheduled research: GitHub Actions, subject to GitHub usage limits.
+- No Render, paid hosting, paid database, or always-on server is assumed.
+- GitHub Actions is scheduled automation, not a continuously running server. Market data shown by the page refreshes in the user's browser.
 
-A separate workflow, `.github/workflows/validate-dashboard.yml`, validates the HTML and required safety labels on pushes to `main` and manual dispatch. The old Pages deployment workflow file has been removed from the current branch. Historical failed/cancelled runs remain in Actions history, but no active Pages deployment workflow is configured.
+## Safety
 
-## Security and cost
-
-- No credentials, API keys, broker details, account balances, or private trading data belong in this repository.
-- No external service, database, package installation, or paid hosting is required to edit and validate the static source.
-- Deployment is intentionally pending a compatible private-repository hosting choice. The connected Vercel account did not expose an available team/project context during the latest check, so no deployment was attempted.
+- Never commit credentials, API keys, broker details, account balances, or private trading data.
+- A passing workflow confirms code checks only; it does not prove strategy profitability or signal accuracy.
+- Keep all trade decisions subject to independent verification and risk controls.
