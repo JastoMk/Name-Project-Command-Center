@@ -54,5 +54,48 @@ jobs:
           console.log('HTML structure, DOM references, market fallback, default instrument and Shield panel checks passed.');
           NODE
           node --check /tmp/dashboard-inline.js
+      - name: Validate published snapshot contract and safe degradation
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'data/shield-latest.json';
+          if (!fs.existsSync(path)) throw new Error('Published Shield snapshot fixture is missing');
+          const snapshot = JSON.parse(fs.readFileSync(path, 'utf8'));
+          if (snapshot.ok !== true || !Number.isFinite(Date.parse(snapshot.generated_at)) || !Array.isArray(snapshot.signals)) {
+            throw new Error('Snapshot must contain ok=true, a valid generated_at timestamp and signals[]');
+          }
+          const forbiddenKeys = /api.?key|authorization|bearer|access.?token|secret/i;
+          const forbiddenValues = /sk-[A-Za-z0-9]{20,}|Bearer\\s+[A-Za-z0-9._~-]{16,}/i;
+          function inspect(value, path = 'snapshot') {
+            if (Array.isArray(value)) return value.forEach((item, i) => inspect(item, path + '[' + i + ']'));
+            if (!value || typeof value !== 'object') {
+              if (typeof value === 'string' && forbiddenValues.test(value)) throw new Error('Credential-like value found at ' + path);
+              return;
+            }
+            for (const [key, child] of Object.entries(value)) {
+              if (forbiddenKeys.test(key)) throw new Error('Credential-bearing field is forbidden: ' + path + '.' + key);
+              inspect(child, path + '.' + key);
+            }
+          }
+          inspect(snapshot);
+          for (const signal of snapshot.signals) {
+            if (!signal || typeof signal !== 'object') throw new Error('Each signal must be an object');
+            if (!['BUY','SELL','WAIT','UNAVAILABLE'].includes(signal.decision)) throw new Error('Unknown deterministic decision for ' + (signal.symbol || 'unknown'));
+            if (signal.ai_shadow !== undefined && (!signal.ai_shadow || typeof signal.ai_shadow.status !== 'string')) throw new Error('ai_shadow, when present, must have a status');
+          }
+          if (snapshot.review_queue !== undefined) {
+            const q = snapshot.review_queue;
+            if (!q || !Array.isArray(q.items) || !Number.isFinite(q.pending_count)) throw new Error('review_queue must expose items[] and pending_count');
+          }
+          const html = fs.readFileSync('index.html', 'utf8');
+          for (const required of ['ageMinutes > 120','ageMinutes < -5','STALE SNAPSHOT','INVALID FUTURE TIMESTAMP','snapshot.review_queue','signal.ai_shadow']) {
+            if (!html.includes(required)) throw new Error('Dashboard degradation/freshness handling missing: ' + required);
+          }
+          if (!html.includes("snapshot.review_queue||{items:[],pending_count:0,status:'unavailable'}") ||
+              !html.includes('signal.ai_shadow||{status:"not_present",assessment:null}')) {
+            throw new Error('Dashboard must gracefully handle snapshots without review_queue or ai_shadow');
+          }
+          console.log('Snapshot contract, optional Phase 2 fields, stale/future timestamp handling and credential hygiene passed.');
+          NODE
       - name: Confirm deployment workflow exists
         run: test -f .github/workflows/deploy-pages.yml
