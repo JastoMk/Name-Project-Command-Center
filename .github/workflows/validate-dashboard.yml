@@ -45,10 +45,27 @@ jobs:
             if (!idSet.has(id)) throw new Error('Required dashboard element missing: ' + id);
           }
           if (!html.includes('https://data-api.binance.vision') || !html.includes('https://api.binance.com')) throw new Error('Market API fallback configuration missing');
-          if (!html.includes("setLiveChart('BINANCE:BTCUSDT'")) throw new Error('Crypto signal engine is not selected by default');
+          if (!html.includes("selectedAsset:'BTCUSDT'") || !html.includes("setLiveChart(ccGold?ccAsset:'BINANCE:'+ccAsset")) throw new Error('Shared-state default asset restoration is missing');
+          if (!html.includes('history.pushState') || !html.includes("addEventListener('popstate'")) throw new Error('Browser history routing is incomplete');
+          if (!html.includes('./assets/js/command-center-state.js')) throw new Error('Shared application state controller is not loaded');
+          if ((html.match(/class="cc-view"/g) || []).length !== 9) throw new Error('Expected nine explicit static workspace containers');
+          if (html.includes('mainSections') || html.includes('oldLayout.remove()')) throw new Error('Runtime DOM relocation is still present');
           if (!html.includes("./data/shield-latest.json")) throw new Error('Golden Shield snapshot panel is not wired');
           console.log('HTML structure, DOM references, market fallback, default instrument and Shield panel checks passed.');
           NODE
           node --check /tmp/dashboard-inline.js
+          node --check assets/js/command-center-state.js
+          node --test tests/command-center-state.test.js
+          node <<'NODE'
+          const fs = require('node:fs');
+          const state = fs.readFileSync('assets/js/command-center-state.js', 'utf8');
+          for (const key of ['activeWorkspace','selectedAsset','timeframe','selectedSignalId','reviewQueue','dataStatus','lastSnapshot','navigationHistory']) {
+            if (!state.includes(key)) throw new Error('Shared state field missing: ' + key);
+          }
+          for (const method of ['setWorkspace','setAsset','setTimeframe','setDataStatus','setLastSnapshot','subscribe']) {
+            if (!state.includes(method)) throw new Error('Shared state API missing: ' + method);
+          }
+          console.log('Shared state controller contract checks passed.');
+          NODE
       - name: Confirm deployment workflow exists
         run: test -f .github/workflows/deploy-pages.yml
