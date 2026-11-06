@@ -330,8 +330,7 @@ setInterval(refreshGoldenShieldSnapshot,60000);
   ['simBalance','simRisk','simWinRate','simAvgWin','simAvgLoss','simTrades','simStreak'].forEach(id=>document.getElementById(id).addEventListener('input',calculatePortfolioScenario));
   calculatePortfolioScenario();
 })();
-</script>
-<script>
+
 /* Build the compact, button-navigated Command Center shell without replacing existing market modules. */
 (function(){
  const shell=document.querySelector('.shell'),header=document.querySelector('.top'),oldLayout=document.querySelector('.layout');
