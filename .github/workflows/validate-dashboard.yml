@@ -2,7 +2,7 @@ name: Validate Command Center Dashboard
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/phase2-review-queue-panel]
   pull_request:
     branches: [main]
   workflow_dispatch:
