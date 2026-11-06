@@ -63,7 +63,83 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .signalhero:after{content:"";position:absolute;right:16px;top:16px;width:28px;height:28px;border:2px dashed #36d7ff88;border-radius:50%;animation:orbit 12s linear infinite;pointer-events:none}
 @keyframes orbit{to{transform:rotate(360deg)}}
 @media(max-width:560px){.confidence{width:100px;height:100px}}
-.livechartframe{height:510px;border:1px solid #1d5268;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));overflow:hidden;background:#07111d}.livechartframe iframe{width:100%;height:100%;border:0}.coin-table-wrap{max-height:620px;overflow:auto;margin-top:12px}.coin-table-wrap thead{position:sticky;top:0;background:#0d1b2c;z-index:2}.coin-row{cursor:pointer}.coin-row:hover{background:#102b3d}.coin-row.selected{background:#123447;outline:1px solid #27bce9}.coin-name{font-weight:800;color:#e7faff}.coin-symbol{font-size:10px;color:var(--muted)}#coinSearch{flex:1}@media(max-width:560px){.livechartframe{height:390px}.coin-table-wrap{max-height:520px}.coin-table-wrap .table{font-size:10px}.coin-table-wrap .table td{padding:8px 4px}}\n</style></head>
+.livechartframe{height:510px;border:1px solid #1d5268;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));overflow:hidden;background:#07111d}.livechartframe iframe{width:100%;height:100%;border:0}.coin-table-wrap{max-height:620px;overflow:auto;margin-top:12px}.coin-table-wrap thead{position:sticky;top:0;background:#0d1b2c;z-index:2}.coin-row{cursor:pointer}.coin-row:hover{background:#102b3d}.coin-row.selected{background:#123447;outline:1px solid #27bce9}.coin-name{font-weight:800;color:#e7faff}.coin-symbol{font-size:10px;color:var(--muted)}#coinSearch{flex:1}@media(max-width:560px){.livechartframe{height:390px}.coin-table-wrap{max-height:520px}.coin-table-wrap .table{font-size:10px}.coin-table-wrap .table td{padding:8px 4px}}\n
+/* COMMAND CENTER 2.0 — compact routed workspace */
+:root{--cc-sidebar:246px;--cc-top:70px}
+html,body{height:100%;overflow:hidden}
+body{min-height:100vh}
+.shell{max-width:none;height:100dvh;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.top{height:var(--cc-top);min-height:var(--cc-top);padding:10px 22px;margin:0 20px;z-index:5}
+.topright{gap:16px}
+.layout{display:none!important}
+.cc-app{display:grid;grid-template-columns:var(--cc-sidebar) minmax(0,1fr);gap:14px;flex:1;min-height:0;padding:14px 20px 16px}
+.cc-sidebar{min-height:0;display:flex;flex-direction:column;background:linear-gradient(180deg,#102638,#091522);border:1px solid #1e8fb5;box-shadow:0 0 20px #13b9e81a;overflow:hidden}
+.cc-sidebrand{padding:16px 14px 12px;border-bottom:1px solid #16465d}
+.cc-sidebrand strong{display:block;font-size:12px;letter-spacing:.16em;color:#e7faff}
+.cc-sidebrand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em;margin-top:4px}
+.cc-nav{display:grid;gap:5px;padding:12px 9px;overflow:auto}
+.cc-nav button,.cc-collapse,.cc-mobile-menu{font:inherit;cursor:pointer}
+.cc-nav button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:11px 12px;color:#9fc0d1;background:transparent;border:1px solid transparent;font-size:12px;letter-spacing:.04em}
+.cc-nav button:hover{background:#123047;border-color:#1a627d;color:#e8faff}
+.cc-nav button[aria-current=page]{color:#72e8ff;background:linear-gradient(90deg,#10394b,#102638);border-color:#238eaf;box-shadow:inset 3px 0 #36d7ff,0 0 14px #22c9f522}
+.cc-nav .nav-icon{width:20px;text-align:center;font-size:15px;color:#36d7ff}
+.cc-sidebar-foot{margin-top:auto;padding:12px;border-top:1px solid #16465d;color:#7fa4b8;font-size:9px;letter-spacing:.1em}
+.cc-workspace{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.cc-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 2px 12px;min-height:42px}
+.cc-page-title{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#dffaff;font-weight:800}
+.cc-page-kicker{font-size:9px;color:#79a8bd;letter-spacing:.12em;margin-top:2px}
+.cc-toolbar-actions{display:flex;align-items:center;gap:8px}
+.cc-collapse{border:1px solid #1c718f;background:#0b2637;color:#8beaff;padding:7px 10px}
+.cc-mobile-menu{display:none;border:1px solid #1c718f;background:#0b2637;color:#8beaff;padding:7px 10px}
+.cc-view{display:none;flex:1;min-height:0;overflow:auto;padding:0 4px 16px 0;scrollbar-color:#1b718f #0a1724;scrollbar-width:thin}
+.cc-view.active{display:block}
+.cc-view[data-view=overview]{overflow:hidden}
+.cc-view .panel{margin:0 0 12px;padding:14px}
+.cc-view .panelhead{margin-bottom:12px}
+.cc-view[data-view=overview] .panel{margin-bottom:10px}
+.cc-view[data-view=overview] #liveMarkets .livechartframe{height:clamp(190px,31vh,330px)}
+.cc-view[data-view=overview] #liveMarkets .footnote{margin-bottom:0}
+.cc-view[data-view=overview] #liveMarkets .panelhead[style]{margin-top:10px!important}
+.cc-view[data-view=markets] .coin-table-wrap{max-height:calc(100dvh - 270px)}
+.cc-view[data-view=markets] #liveMarkets{display:none}
+.cc-view[data-view=gold] .gold-hero{display:grid;grid-template-columns:1fr auto;align-items:center;gap:18px;padding:20px;border:1px solid #8b6c37;background:linear-gradient(120deg,#302718,#102131);margin-bottom:12px}
+.cc-view[data-view=gold] .gold-hero h2{margin:0 0 6px;color:#ffd27b}
+.cc-view[data-view=gold] .gold-hero p{margin:0;color:#c2b18e;font-size:12px}
+.cc-view[data-view=gold] .gold-note{border-left:2px solid var(--amber);padding:12px;background:#2a2419;color:#e8d7b2;font-size:11px}
+.cc-view[data-view=gold] .gold-action{border:1px solid #b58a45;background:#332719;color:#ffdc95;padding:11px 14px;cursor:pointer;font:inherit}
+.cc-view[data-view=overview] #liveMarkets .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cc-view[data-view=overview] #liveMarkets .livechartframe{clip-path:none}
+.cc-view[data-view=overview] #liveMarkets .tradingview-widget-container{min-height:0}
+.cc-footer{padding:6px 0 0;text-align:center;font-size:9px;color:#668ba0;letter-spacing:.1em}
+.shell.cc-collapsed{--cc-sidebar:70px}
+.shell.cc-collapsed .cc-sidebrand strong,.shell.cc-collapsed .cc-sidebrand small,.shell.cc-collapsed .cc-nav .nav-label,.shell.cc-collapsed .cc-sidebar-foot{display:none}
+.shell.cc-collapsed .cc-sidebrand{padding:14px 8px;text-align:center}
+.shell.cc-collapsed .cc-nav button{justify-content:center;padding:12px 4px}
+.shell.cc-collapsed .cc-nav .nav-icon{font-size:18px}
+@media(max-width:760px){
+ html,body{overflow:hidden}
+ .top{margin:0 10px;padding:9px 2px;height:62px;min-height:62px}
+ .brand h1{font-size:13px}.eyebrow{font-size:8px}.logo{height:36px;width:36px}
+ .topright{font-size:9px;gap:3px}
+ .cc-app{display:block;position:relative;padding:8px 10px 10px}
+ .cc-sidebar{position:fixed;z-index:20;left:10px;top:70px;bottom:10px;width:min(290px,84vw);transform:translateX(calc(-100% - 20px));transition:transform .2s ease;box-shadow:0 20px 50px #000b}
+ .shell.cc-mobile-open .cc-sidebar{transform:translateX(0)}
+ .cc-workspace{height:100%;min-height:0}
+ .cc-toolbar{min-height:38px;padding-bottom:8px}
+ .cc-mobile-menu{display:inline-block}
+ .cc-collapse{display:none}
+ .cc-view{height:calc(100% - 40px)}
+ .cc-view[data-view=overview]{overflow:auto}
+ .cc-view[data-view=overview] #liveMarkets .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cc-view[data-view=overview] #liveMarkets .livechartframe{height:230px}
+ .cc-view .panel{padding:11px;margin-bottom:9px}
+ .cc-view[data-view=markets] .coin-table-wrap{max-height:calc(100dvh - 255px)}
+ .cc-view[data-view=gold] .gold-hero{grid-template-columns:1fr}
+ .cc-footer{display:none}
+}
+@media(max-width:390px){.topright span:first-child{display:none}.cc-page-kicker{display:none}.cc-view[data-view=overview] #liveMarkets .livechartframe{height:195px}}
+
+</style></head>
 <body><div class="shell">
 <header class="top"><div class="brand"><div class="logo">⌘</div><div><div class="eyebrow">Project command centre / market intelligence</div><h1>COMMAND <span style="color:var(--cyan)">//</span> CONTROL</h1></div></div><div class="topright"><span><i class="live-dot"></i> PUBLIC MARKET FEED</span><span id="clock">Connecting…</span></div></header>
 <div class="layout"><main class="maincol">
@@ -254,4 +330,65 @@ setInterval(refreshGoldenShieldSnapshot,60000);
   ['simBalance','simRisk','simWinRate','simAvgWin','simAvgLoss','simTrades','simStreak'].forEach(id=>document.getElementById(id).addEventListener('input',calculatePortfolioScenario));
   calculatePortfolioScenario();
 })();
-</script></body></html>
+
+/* Build the compact, button-navigated Command Center shell without replacing existing market modules. */
+(function(){
+ const shell=document.querySelector('.shell'),header=document.querySelector('.top'),oldLayout=document.querySelector('.layout');
+ if(!shell||!header||!oldLayout||document.querySelector('.cc-app'))return;
+ const main=oldLayout.querySelector('.maincol'),aside=oldLayout.querySelector('.sidecol');
+ const mainSections=[...main.querySelectorAll(':scope > section')],sideSections=[...aside.querySelectorAll(':scope > section')];
+ const heading=el=>(el.querySelector('h2')?.textContent||'').trim().toLowerCase();
+ const find=(arr,part)=>arr.find(el=>heading(el).includes(part));
+ const views={
+  overview:[find(mainSections,'market terminal'),find(mainSections,'live global markets'),find(sideSections,'market watch')],
+  markets:[find(mainSections,'top 100 crypto')],
+  signals:[find(mainSections,'browser-side technical'),find(mainSections,'price action'),find(mainSections,'indicator matrix'),find(sideSections,'signal methodology')],
+  gold:[],
+  backtesting:[find(mainSections,'historical strategy'),find(mainSections,'research diagnostics')],
+  portfolio:[find(mainSections,'portfolio scenario')],
+  calendar:[find(mainSections,'economic calendar')],
+  shield:[find(mainSections,'operation golden shield')],
+  health:[find(sideSections,'operational integrity')]
+ };
+ const labels={overview:['Overview','LIVE MARKET PICTURE','▦'],markets:['Markets','BINANCE SPOT UNIVERSE','◫'],signals:['Signals','TECHNICAL RESEARCH','⌁'],shield:['Golden Shield','ENGINE INTELLIGENCE','⬡'],gold:['Gold','XAU/USD RESEARCH','◈'],backtesting:['Backtesting','HISTORICAL STRATEGY LAB','▤'],portfolio:['Portfolio','RISK SCENARIOS','◉'],calendar:['Calendar','ECONOMIC EVENTS','▣'],health:['System health','CONNECTIVITY & SAFETY','⚙']};
+ const app=document.createElement('div');app.className='cc-app';
+ const sidebar=document.createElement('aside');sidebar.className='cc-sidebar';sidebar.setAttribute('aria-label','Main navigation');
+ sidebar.innerHTML='<div class="cc-sidebrand"><strong>GOLDEN SHIELD</strong><small>COMMAND INTERFACE · 2.0</small></div><nav class="cc-nav" aria-label="Dashboard sections"></nav><div class="cc-sidebar-foot">RESEARCH MODE · EXECUTION DISABLED</div>';
+ const nav=sidebar.querySelector('.cc-nav'),workspace=document.createElement('main');workspace.className='cc-workspace';
+ const toolbar=document.createElement('div');toolbar.className='cc-toolbar';toolbar.innerHTML='<div><div class="cc-page-title" id="ccPageTitle">Overview</div><div class="cc-page-kicker" id="ccPageKicker">LIVE MARKET PICTURE</div></div><div class="cc-toolbar-actions"><button class="cc-mobile-menu" id="ccMobileMenu" aria-label="Open navigation">☰ MENU</button><button class="cc-collapse" id="ccCollapse" aria-label="Collapse sidebar">⇤ COLLAPSE</button></div>';
+ workspace.append(toolbar);
+ const viewNodes={};
+ Object.entries(views).forEach(([key,items])=>{
+  const view=document.createElement('section');view.className='cc-view';view.dataset.view=key;viewNodes[key]=view;
+  (items||[]).filter(Boolean).forEach(el=>view.append(el));
+  workspace.append(view);
+ });
+ const gold=viewNodes.gold;
+ gold.innerHTML='<div class="gold-hero"><div><div class="eyebrow">PRECIOUS METALS MODULE</div><h2>Gold · XAU/USD</h2><p>Dedicated gold workspace. Chart data is provided by OANDA through TradingView, independently of Binance crypto data.</p></div><button class="gold-action" id="ccOpenGoldChart">OPEN GOLD CHART ↗</button></div><div class="panel"><div class="panelhead"><h2>Gold research status</h2><span class="tag wait">MODEL NOT VALIDATED</span></div><div class="metrics"><div class="metric"><label>Market instrument</label><strong>XAU/USD</strong><small>OANDA indicative feed</small></div><div class="metric"><label>Golden Shield signal</label><strong>Unavailable</strong><small>No validated gold signal model</small></div><div class="metric"><label>Broker sizing</label><strong>Blocked</strong><small>MT5 contract specifications unverified</small></div><div class="metric"><label>Execution</label><strong>Disabled</strong><small>Research only</small></div></div><p class="gold-note">Important: the live chart is not an Exness XAUUSDc execution feed. PAXGUSDT is a tokenised-gold crypto asset, not spot XAUUSD. No gold entry, stop, target or lot size is generated by this module.</p></div>';
+ const footer=document.querySelector('footer.footnote');if(footer)workspace.append(footer);
+ app.append(sidebar,workspace);header.after(app);oldLayout.remove();
+ Object.entries(labels).forEach(([key,data])=>{
+  const button=document.createElement('button');button.type='button';button.dataset.target=key;button.innerHTML='<span class="nav-icon" aria-hidden="true">'+data[2]+'</span><span class="nav-label">'+data[0]+'</span>';button.setAttribute('aria-label',data[0]);button.addEventListener('click',()=>activate(key));nav.append(button);
+ });
+ function activate(key){
+  if(!viewNodes[key])return;
+  Object.entries(viewNodes).forEach(([k,v])=>v.classList.toggle('active',k===key));
+  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.target===key)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  document.getElementById('ccPageTitle').textContent=labels[key][0];document.getElementById('ccPageKicker').textContent=labels[key][1];
+  shell.classList.remove('cc-mobile-open');
+  try{history.replaceState(null,'','#'+key)}catch(e){}
+  if(key==='gold'){/* Dedicated gold module keeps crypto-only engine clearly separate. */}
+  if(key==='overview'&&window.dispatchEvent)window.dispatchEvent(new Event('resize'));
+ }
+ nav.addEventListener('keydown',e=>{if(e.key==='Escape')shell.classList.remove('cc-mobile-open')});
+ document.getElementById('ccCollapse').addEventListener('click',()=>{shell.classList.toggle('cc-collapsed');document.getElementById('ccCollapse').textContent=shell.classList.contains('cc-collapsed')?'⇥ EXPAND':'⇤ COLLAPSE'});
+ document.getElementById('ccMobileMenu').addEventListener('click',()=>shell.classList.toggle('cc-mobile-open'));
+ document.getElementById('ccOpenGoldChart').addEventListener('click',()=>{
+  activate('overview');const select=document.getElementById('liveAsset');if(select){select.value='OANDA:XAUUSD';select.dispatchEvent(new Event('change',{bubbles:true}))}
+ });
+ const hash=location.hash.replace('#','');activate(viewNodes[hash]?hash:'overview');
+ window.addEventListener('hashchange',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key)});
+})();
+</script>
+
+</body></html>
