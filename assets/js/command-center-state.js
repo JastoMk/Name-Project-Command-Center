@@ -66,12 +66,23 @@
   }
   function setAsset(asset, source) {
     if (typeof asset !== 'string' || !asset.trim()) return false;
-    update({ selectedAsset: asset.trim().toUpperCase(), dataSource: source || state.dataSource }, 'asset');
+    const normalized = asset.trim().toUpperCase();
+    update({ selectedAsset: normalized, dataSource: source || state.dataSource }, 'asset');
+    syncControls();
+    if (source === 'engine-selector' && normalized !== 'OANDA:XAUUSD' && typeof global.setLiveChart === 'function') {
+      global.setLiveChart('BINANCE:' + normalized, normalized.replace('USDT', ' / USDT'), 'Binance · TradingView');
+    }
     return true;
   }
-  function setTimeframe(timeframe) {
+  function setTimeframe(timeframe, source) {
     if (typeof timeframe !== 'string' || !timeframe.trim()) return false;
     update({ timeframe: timeframe.trim() }, 'timeframe');
+    syncControls();
+    if (source === 'engine-selector' && typeof global.setLiveChart === 'function') {
+      const current = global.document.getElementById('liveAsset');
+      const instrument = current ? current.value : 'BINANCE:' + state.selectedAsset;
+      global.setLiveChart(instrument, instrument === 'OANDA:XAUUSD' ? 'XAU/USD' : instrument.replace('BINANCE:', '').replace('USDT', ' / USDT'), instrument === 'OANDA:XAUUSD' ? 'OANDA · TradingView' : 'Binance · TradingView');
+    }
     return true;
   }
   function setSignal(signalId) { update({ selectedSignalId: signalId || null }, 'signal'); }
@@ -128,9 +139,9 @@
   function wireControls() {
     const byId = id => global.document.getElementById(id);
     const symbol = byId('symbol'), liveAsset = byId('liveAsset'), interval = byId('interval'), liveTf = byId('liveTf');
-    if (symbol) symbol.addEventListener('change', () => setAsset(symbol.value, 'binance'));
+    if (symbol) symbol.addEventListener('change', () => setAsset(symbol.value, 'engine-selector'));
     if (liveAsset) liveAsset.addEventListener('change', () => setAsset(liveAsset.value === 'OANDA:XAUUSD' ? 'OANDA:XAUUSD' : liveAsset.value.replace(/^BINANCE:/, ''), liveAsset.value === 'OANDA:XAUUSD' ? 'oanda' : 'binance'));
-    if (interval) interval.addEventListener('change', () => setTimeframe(interval.value));
+    if (interval) interval.addEventListener('change', () => setTimeframe(interval.value, 'engine-selector'));
     if (liveTf) liveTf.addEventListener('change', () => {
       const map = { '1':'1m', '5':'5m', '15':'15m', '60':'1h', '240':'4h', 'D':'1d' };
       if (map[liveTf.value]) setTimeframe(map[liveTf.value]);
