@@ -47,6 +47,10 @@ jobs:
           if (!html.includes('https://data-api.binance.vision') || !html.includes('https://api.binance.com')) throw new Error('Market API fallback configuration missing');
           if (!html.includes("setLiveChart('BINANCE:BTCUSDT'")) throw new Error('Crypto signal engine is not selected by default');
           if (!html.includes("./data/shield-latest.json")) throw new Error('Golden Shield snapshot panel is not wired');
+          if (!idSet.has('shieldReviewQueue') || !html.includes('snapshot.review_queue')) throw new Error('Central human-review queue is not wired');
+          if (!html.includes('signal.ai_shadow') || !html.includes('ai.provider') || !html.includes('ai.request_id')) throw new Error('AI shadow provenance panel is incomplete');
+          if (html.includes('/api/reviews/') || html.includes('Authorization: Bearer') || html.includes('localStorage')) throw new Error('Public dashboard must not contain review API credentials or authenticated review actions');
+          if (!html.includes('queueSummary.textContent') || !html.includes('reasons.textContent')) throw new Error('Review queue must render snapshot text safely');
           console.log('HTML structure, DOM references, market fallback, default instrument and Shield panel checks passed.');
           NODE
           node --check /tmp/dashboard-inline.js
