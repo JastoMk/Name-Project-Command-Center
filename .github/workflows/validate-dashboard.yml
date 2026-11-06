@@ -53,6 +53,7 @@ jobs:
           NODE
           node --check /tmp/dashboard-inline.js
           node --check assets/js/command-center-state.js
+          node --test tests/command-center-state.test.js
           node <<'NODE'
           const fs = require('node:fs');
           const state = fs.readFileSync('assets/js/command-center-state.js', 'utf8');
