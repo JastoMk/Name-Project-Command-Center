@@ -176,6 +176,7 @@ body{min-height:100vh}
     <span class="tag" id="shieldSnapshotState">AWAITING SNAPSHOT</span>
   </div>
   <div class="statusline" id="shieldSnapshotUpdated">No Golden Shield snapshot has been published yet.</div>
+  <div id="shieldReviewQueue" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px"><div class="eyebrow">CENTRAL HUMAN REVIEW QUEUE</div><div class="sub">Waiting for the next Shield snapshot.</div></div>
   <div id="shieldSnapshotCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px">
     <div class="sideitem"><span>Shield connection</span><strong>Pending setup</strong></div>
   </div>
@@ -265,10 +266,29 @@ async function refreshGoldenShieldSnapshot(){
     if(!snapshot.ok||!Array.isArray(snapshot.signals))throw new Error('Snapshot format is invalid.');
     const generated=new Date(snapshot.generated_at);
     if(!Number.isFinite(generated.getTime()))throw new Error('Snapshot timestamp is invalid.');
-    const ageMinutes=Math.max(0,(Date.now()-generated.getTime())/60000);
-    state.textContent=ageMinutes>120?'STALE SNAPSHOT':'CONNECTED · RESEARCH ONLY';
-    state.className='tag '+(ageMinutes>120?'wait':'');
-    updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(ageMinutes>120?' · Older than 2 hours; do not rely on it.':'');
+    const ageMinutes=(Date.now()-generated.getTime())/60000;
+    const futureTimestamp=ageMinutes < -5;
+    const staleSnapshot=ageMinutes > 120 || futureTimestamp;
+    const partialSnapshot=snapshot.snapshot_status==='partial'||snapshot.data_quality?.status==='partial';
+    state.textContent=futureTimestamp?'INVALID FUTURE TIMESTAMP':(staleSnapshot?'STALE SNAPSHOT':(partialSnapshot?'PARTIAL DATA · CHECK ASSETS':'CONNECTED · RESEARCH ONLY'));
+    state.className='tag '+((staleSnapshot||partialSnapshot)?'wait':'');
+    updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(futureTimestamp?' · Snapshot timestamp is more than 5 minutes in the future; treat data as invalid.':(staleSnapshot?' · Older than 2 hours; do not rely on it.':(partialSnapshot?' · One or more asset feeds failed; inspect each asset status before use.':' · Snapshot is within the 2-hour freshness window.')));
+    const reviewHost=document.getElementById('shieldReviewQueue');
+    if(reviewHost){
+      reviewHost.replaceChildren();
+      const queue=snapshot.review_queue||{items:[],pending_count:0,status:'unavailable'};
+      const queueTitle=document.createElement('div');queueTitle.className='eyebrow';queueTitle.textContent='CENTRAL HUMAN REVIEW QUEUE · '+String(queue.status||'unavailable').replaceAll('_',' ').toUpperCase();
+      const queueSummary=document.createElement('div');queueSummary.className='sub';queueSummary.textContent=Number(queue.pending_count||0)+' pending item(s) · Human decisions only; AI cannot resolve review items.';
+      reviewHost.append(queueTitle,queueSummary);
+      for(const item of (Array.isArray(queue.items)?queue.items:[])){
+        const row=document.createElement('article');row.style.cssText='margin-top:9px;padding:10px;border:1px solid var(--line);border-radius:9px';
+        const asset=document.createElement('strong');asset.textContent=item.asset||'Unknown asset';
+        const comparison=document.createElement('div');comparison.className='sub';comparison.textContent='Deterministic: '+(item.deterministic_decision||'—')+' · AI bias: '+(item.ai_bias||'unavailable')+' · Status: '+(item.status||'pending');
+        const reasons=document.createElement('p');reasons.className='footnote';reasons.textContent='Review reasons: '+(Array.isArray(item.reasons)?item.reasons.join(' · '):'Not supplied');
+        row.append(asset,comparison,reasons);reviewHost.append(row);
+      }
+      if(!queue.items||!queue.items.length){const clear=document.createElement('p');clear.className='footnote';clear.textContent=queue.status==='clear'?'No pending critical review items in this snapshot.':'Review queue unavailable in this snapshot.';reviewHost.append(clear)}
+    }
     container.replaceChildren();
     for(const signal of snapshot.signals){
       const card=document.createElement('article');
@@ -276,7 +296,7 @@ async function refreshGoldenShieldSnapshot(){
       card.style.cssText='display:block;padding:14px;border:1px solid var(--line);border-radius:12px;min-width:0';
       const title=document.createElement('div');title.className='eyebrow';title.textContent=signal.symbol||'Unknown symbol';
       const decision=document.createElement('div');decision.style.cssText='font-size:24px;font-weight:800;margin:7px 0';decision.textContent=signal.decision||'UNAVAILABLE';
-      const meta=document.createElement('div');meta.className='sub';meta.textContent='Confidence label: '+(signal.confidence||'none')+' · Evidence grade: '+(signal.signal_grade||'not graded')+' · Score: '+(signal.weighted_score??'—');
+      const meta=document.createElement('div');meta.className='sub';meta.textContent='Feed: '+String(signal.data_status|| (signal.decision==='UNAVAILABLE'?'unavailable':'legacy/unspecified')).toUpperCase()+' · Confidence label: '+(signal.confidence||'none')+' · Evidence grade: '+(signal.signal_grade||'not graded')+' · Score: '+(signal.weighted_score??'—');
       const regime=document.createElement('div');regime.className='sub';regime.textContent='Market regime: '+String(signal.regime||'unavailable').replaceAll('_',' ');
       const price=document.createElement('div');price.className='sub';price.textContent=Number.isFinite(signal.price)?'Last price: '+signal.price.toLocaleString():'Price unavailable';
       card.append(title,decision,meta,regime,price);
@@ -296,6 +316,7 @@ async function refreshGoldenShieldSnapshot(){
         const a=ai.assessment;
         const summary=document.createElement('p');summary.className='footnote';summary.textContent=a.assessment||'No summary supplied.';aiBox.append(summary);
         const meta=document.createElement('div');meta.className='sub';meta.textContent='Bias: '+(a.bias||'unclear')+' · Confidence: '+(a.confidence||'unknown')+' · Data: '+(a.data_quality||'unknown')+' · Recommendation: '+(a.recommendation||'no_assessment');aiBox.append(meta);
+        const provenance=document.createElement('div');provenance.className='sub';provenance.textContent='Provider: '+(ai.provider||'unknown')+' · Model: '+(ai.model||'unreported')+' · Request: '+(ai.request_id||'unavailable');aiBox.append(provenance);
         for(const [label,items] of [['Supporting evidence',a.supporting_evidence],['Contradicting evidence',a.contradicting_evidence],['Risks',a.risks],['Alternative scenarios',a.alternative_scenarios],['Invalidation conditions',a.invalidation_conditions]]){
           if(!Array.isArray(items)||!items.length)continue;
           const heading=document.createElement('div');heading.className='sub';heading.style.marginTop='8px';heading.style.color='#72e8ff';heading.textContent=label;aiBox.append(heading);
