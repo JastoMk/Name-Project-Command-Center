@@ -285,6 +285,27 @@ async function refreshGoldenShieldSnapshot(){
         structure.textContent='Structure: '+signal.timeframes.map(item=>item.timeframe+' '+(item.structure||'—')).join(' · ');
         card.append(structure);
       }
+      const ai=signal.ai_shadow||{status:"not_present",assessment:null};
+      const aiBox=document.createElement('div');
+      aiBox.style.cssText='margin-top:12px;padding:11px;border:1px solid #27617a;background:#081725;border-radius:8px';
+      const aiTitle=document.createElement('div');
+      aiTitle.className='eyebrow';
+      aiTitle.textContent='OPENAI SHADOW INTELLIGENCE · '+String(ai.status||'unavailable').replaceAll('_',' ').toUpperCase();
+      aiBox.append(aiTitle);
+      if(ai.status==='available'&&ai.assessment){
+        const a=ai.assessment;
+        const summary=document.createElement('p');summary.className='footnote';summary.textContent=a.assessment||'No summary supplied.';aiBox.append(summary);
+        const meta=document.createElement('div');meta.className='sub';meta.textContent='Bias: '+(a.bias||'unclear')+' · Confidence: '+(a.confidence||'unknown')+' · Data: '+(a.data_quality||'unknown')+' · Recommendation: '+(a.recommendation||'no_assessment');aiBox.append(meta);
+        for(const [label,items] of [['Supporting evidence',a.supporting_evidence],['Contradicting evidence',a.contradicting_evidence],['Risks',a.risks],['Alternative scenarios',a.alternative_scenarios],['Invalidation conditions',a.invalidation_conditions]]){
+          if(!Array.isArray(items)||!items.length)continue;
+          const heading=document.createElement('div');heading.className='sub';heading.style.marginTop='8px';heading.style.color='#72e8ff';heading.textContent=label;aiBox.append(heading);
+          for(const item of items){const line=document.createElement('p');line.className='footnote';line.textContent='• '+item;aiBox.append(line)}
+        }
+        const review=document.createElement('div');review.className='sub';review.style.marginTop='8px';review.textContent=a.requires_human_review?'Human review required · AI has no execution authority':'Research commentary only';aiBox.append(review);
+      }else{
+        const unavailable=document.createElement('p');unavailable.className='footnote';unavailable.textContent='No AI assessment attached to this snapshot. Deterministic Shield analysis remains the authoritative research output.';aiBox.append(unavailable);
+      }
+      card.append(aiBox);
       for(const reason of (signal.reasons||[])){
         const line=document.createElement('p');line.className='footnote';line.textContent=reason;card.append(line);
       }
