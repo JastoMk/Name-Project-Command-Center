@@ -100,6 +100,49 @@
   }
   global.addEventListener('popstate', syncFromLocation);
   global.addEventListener('hashchange', syncFromLocation);
+  function syncControls() {
+    const symbol = global.document.getElementById('symbol');
+    const liveAsset = global.document.getElementById('liveAsset');
+    const interval = global.document.getElementById('interval');
+    const liveTf = global.document.getElementById('liveTf');
+    if (state.selectedAsset === 'OANDA:XAUUSD' && liveAsset) liveAsset.value = 'OANDA:XAUUSD';
+    else if (state.selectedAsset && symbol) {
+      if (![...symbol.options].some(option => option.value === state.selectedAsset)) {
+        symbol.add(new Option(state.selectedAsset, state.selectedAsset));
+      }
+      symbol.value = state.selectedAsset;
+      if (liveAsset) {
+        const chartValue = 'BINANCE:' + state.selectedAsset;
+        if (![...liveAsset.options].some(option => option.value === chartValue)) {
+          liveAsset.add(new Option(state.selectedAsset, chartValue));
+        }
+        liveAsset.value = chartValue;
+      }
+    }
+    if (interval && [...interval.options].some(option => option.value === state.timeframe)) interval.value = state.timeframe;
+    const chartTimeframes = { '1m':'1', '5m':'5', '15m':'15', '1h':'60', '4h':'240', '1d':'D' };
+    if (liveTf && chartTimeframes[state.timeframe] && [...liveTf.options].some(option => option.value === chartTimeframes[state.timeframe])) {
+      liveTf.value = chartTimeframes[state.timeframe];
+    }
+  }
+  function wireControls() {
+    const byId = id => global.document.getElementById(id);
+    const symbol = byId('symbol'), liveAsset = byId('liveAsset'), interval = byId('interval'), liveTf = byId('liveTf');
+    if (symbol) symbol.addEventListener('change', () => setAsset(symbol.value, 'binance'));
+    if (liveAsset) liveAsset.addEventListener('change', () => setAsset(liveAsset.value === 'OANDA:XAUUSD' ? 'OANDA:XAUUSD' : liveAsset.value.replace(/^BINANCE:/, ''), liveAsset.value === 'OANDA:XAUUSD' ? 'oanda' : 'binance'));
+    if (interval) interval.addEventListener('change', () => setTimeframe(interval.value));
+    if (liveTf) liveTf.addEventListener('change', () => {
+      const map = { '1':'1m', '5':'5m', '15':'15m', '60':'1h', '240':'4h', 'D':'1d' };
+      if (map[liveTf.value]) setTimeframe(map[liveTf.value]);
+    });
+    const rows = byId('coinRows');
+    if (rows) rows.addEventListener('click', event => {
+      const row = event.target.closest('tr[data-symbol]');
+      if (row) setAsset(row.dataset.symbol, 'binance');
+    });
+    syncControls();
+  }
+  wireControls();
   global.CommandCenterState = Object.freeze({
     workspaces: WORKSPACES.slice(), getState, subscribe, setWorkspace, setAsset,
     setTimeframe, setSignal, setDataStatus, setLastSnapshot
