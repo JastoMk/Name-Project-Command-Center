@@ -189,6 +189,7 @@ body{min-height:100vh}
 </aside></div>
 <footer class="footnote" style="text-align:center;margin-top:18px">PROJECT COMMAND CENTER · DARK NAVY / CYAN OPERATIONS THEME · DATA: BINANCE SPOT · NO API KEYS · NO LIVE EXECUTION</footer>
 </div>
+<script src="./assets/js/command-center-state.js"></script>
 <script>
 const $=id=>document.getElementById(id);let candles=[],refreshTimer=null,goldSelected=false;
 const MARKET_API_BASES=['https://data-api.binance.vision','https://api.binance.com'];
@@ -370,13 +371,15 @@ setInterval(refreshGoldenShieldSnapshot,60000);
  Object.entries(labels).forEach(([key,data])=>{
   const button=document.createElement('button');button.type='button';button.dataset.target=key;button.innerHTML='<span class="nav-icon" aria-hidden="true">'+data[2]+'</span><span class="nav-label">'+data[0]+'</span>';button.setAttribute('aria-label',data[0]);button.addEventListener('click',()=>activate(key));nav.append(button);
  });
- function activate(key){
+ function activate(key,options){
   if(!viewNodes[key])return;
+  const opts=options||{};
+  if(window.CommandCenterState)window.CommandCenterState.setWorkspace(key,{updateUrl:false});
   Object.entries(viewNodes).forEach(([k,v])=>v.classList.toggle('active',k===key));
   nav.querySelectorAll('button').forEach(b=>{if(b.dataset.target===key)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   document.getElementById('ccPageTitle').textContent=labels[key][0];document.getElementById('ccPageKicker').textContent=labels[key][1];
   shell.classList.remove('cc-mobile-open');
-  try{history.replaceState(null,'','#'+key)}catch(e){}
+  if(!opts.fromHistory){try{if(location.hash!=='#'+key)history.pushState({workspace:key},'','#'+key)}catch(e){}}
   if(key==='gold'){/* Dedicated gold module keeps crypto-only engine clearly separate. */}
   if(key==='overview'&&window.dispatchEvent)window.dispatchEvent(new Event('resize'));
  }
@@ -387,7 +390,8 @@ setInterval(refreshGoldenShieldSnapshot,60000);
   activate('overview');const select=document.getElementById('liveAsset');if(select){select.value='OANDA:XAUUSD';select.dispatchEvent(new Event('change',{bubbles:true}))}
  });
  const hash=location.hash.replace('#','');activate(viewNodes[hash]?hash:'overview');
- window.addEventListener('hashchange',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key)});
+ window.addEventListener('popstate',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key,{fromHistory:true})});
+ window.addEventListener('hashchange',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key,{fromHistory:true})});
 })();
 </script>
 
