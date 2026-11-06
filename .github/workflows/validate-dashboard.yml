@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, feature/phase2-review-queue-panel]
   pull_request:
-    branches: [main]
+    branches: [main, feature/golden-shield-ai-panel]
   workflow_dispatch:
 
 permissions:
