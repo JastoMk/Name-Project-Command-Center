@@ -88,7 +88,7 @@ jobs:
             if (!q || !Array.isArray(q.items) || !Number.isFinite(q.pending_count)) throw new Error('review_queue must expose items[] and pending_count');
           }
           const html = fs.readFileSync('index.html', 'utf8');
-          for (const required of ['ageMinutes > 120','ageMinutes < -5','STALE SNAPSHOT','INVALID FUTURE TIMESTAMP','snapshot.review_queue','signal.ai_shadow']) {
+          for (const required of ['ageMinutes > 120','ageMinutes < -5','STALE SNAPSHOT','INVALID FUTURE TIMESTAMP','PARTIAL DATA · CHECK ASSETS','snapshot.snapshot_status','signal.data_status','snapshot.review_queue','signal.ai_shadow']) {
             if (!html.includes(required)) throw new Error('Dashboard degradation/freshness handling missing: ' + required);
           }
           if (!html.includes("snapshot.review_queue||{items:[],pending_count:0,status:'unavailable'}") ||
