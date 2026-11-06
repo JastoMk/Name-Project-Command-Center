@@ -269,9 +269,10 @@ async function refreshGoldenShieldSnapshot(){
     const ageMinutes=(Date.now()-generated.getTime())/60000;
     const futureTimestamp=ageMinutes < -5;
     const staleSnapshot=ageMinutes > 120 || futureTimestamp;
-    state.textContent=futureTimestamp?'INVALID FUTURE TIMESTAMP':(staleSnapshot?'STALE SNAPSHOT':'CONNECTED · RESEARCH ONLY');
-    state.className='tag '+(staleSnapshot?'wait':'');
-    updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(futureTimestamp?' · Snapshot timestamp is more than 5 minutes in the future; treat data as invalid.':(staleSnapshot?' · Older than 2 hours; do not rely on it.':' · Snapshot is within the 2-hour freshness window.'));
+    const partialSnapshot=snapshot.snapshot_status==='partial'||snapshot.data_quality?.status==='partial';
+    state.textContent=futureTimestamp?'INVALID FUTURE TIMESTAMP':(staleSnapshot?'STALE SNAPSHOT':(partialSnapshot?'PARTIAL DATA · CHECK ASSETS':'CONNECTED · RESEARCH ONLY'));
+    state.className='tag '+((staleSnapshot||partialSnapshot)?'wait':'');
+    updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(futureTimestamp?' · Snapshot timestamp is more than 5 minutes in the future; treat data as invalid.':(staleSnapshot?' · Older than 2 hours; do not rely on it.':(partialSnapshot?' · One or more asset feeds failed; inspect each asset status before use.':' · Snapshot is within the 2-hour freshness window.')));
     const reviewHost=document.getElementById('shieldReviewQueue');
     if(reviewHost){
       reviewHost.replaceChildren();
@@ -295,7 +296,7 @@ async function refreshGoldenShieldSnapshot(){
       card.style.cssText='display:block;padding:14px;border:1px solid var(--line);border-radius:12px;min-width:0';
       const title=document.createElement('div');title.className='eyebrow';title.textContent=signal.symbol||'Unknown symbol';
       const decision=document.createElement('div');decision.style.cssText='font-size:24px;font-weight:800;margin:7px 0';decision.textContent=signal.decision||'UNAVAILABLE';
-      const meta=document.createElement('div');meta.className='sub';meta.textContent='Confidence label: '+(signal.confidence||'none')+' · Evidence grade: '+(signal.signal_grade||'not graded')+' · Score: '+(signal.weighted_score??'—');
+      const meta=document.createElement('div');meta.className='sub';meta.textContent='Feed: '+String(signal.data_status|| (signal.decision==='UNAVAILABLE'?'unavailable':'legacy/unspecified')).toUpperCase()+' · Confidence label: '+(signal.confidence||'none')+' · Evidence grade: '+(signal.signal_grade||'not graded')+' · Score: '+(signal.weighted_score??'—');
       const regime=document.createElement('div');regime.className='sub';regime.textContent='Market regime: '+String(signal.regime||'unavailable').replaceAll('_',' ');
       const price=document.createElement('div');price.className='sub';price.textContent=Number.isFinite(signal.price)?'Last price: '+signal.price.toLocaleString():'Price unavailable';
       card.append(title,decision,meta,regime,price);
