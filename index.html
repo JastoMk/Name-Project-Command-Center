@@ -266,10 +266,12 @@ async function refreshGoldenShieldSnapshot(){
     if(!snapshot.ok||!Array.isArray(snapshot.signals))throw new Error('Snapshot format is invalid.');
     const generated=new Date(snapshot.generated_at);
     if(!Number.isFinite(generated.getTime()))throw new Error('Snapshot timestamp is invalid.');
-    const ageMinutes=Math.max(0,(Date.now()-generated.getTime())/60000);
-    state.textContent=ageMinutes>120?'STALE SNAPSHOT':'CONNECTED · RESEARCH ONLY';
-    state.className='tag '+(ageMinutes>120?'wait':'');
-    updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(ageMinutes>120?' · Older than 2 hours; do not rely on it.':'');
+    const ageMinutes=(Date.now()-generated.getTime())/60000;
+    const futureTimestamp=ageMinutes < -5;
+    const staleSnapshot=ageMinutes > 120 || futureTimestamp;
+    state.textContent=futureTimestamp?'INVALID FUTURE TIMESTAMP':(staleSnapshot?'STALE SNAPSHOT':'CONNECTED · RESEARCH ONLY');
+    state.className='tag '+(staleSnapshot?'wait':'');
+    updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(futureTimestamp?' · Snapshot timestamp is more than 5 minutes in the future; treat data as invalid.':(staleSnapshot?' · Older than 2 hours; do not rely on it.':' · Snapshot is within the 2-hour freshness window.'));
     const reviewHost=document.getElementById('shieldReviewQueue');
     if(reviewHost){
       reviewHost.replaceChildren();
