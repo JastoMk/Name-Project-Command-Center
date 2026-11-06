@@ -389,7 +389,7 @@ setInterval(refreshGoldenShieldSnapshot,60000);
  document.getElementById('ccOpenGoldChart').addEventListener('click',()=>{
   activate('overview');const select=document.getElementById('liveAsset');if(select){select.value='OANDA:XAUUSD';select.dispatchEvent(new Event('change',{bubbles:true}))}
  });
- const hash=location.hash.replace('#','');activate(viewNodes[hash]?hash:'overview');
+ const hash=location.hash.replace('#','');const savedWorkspace=window.CommandCenterState?window.CommandCenterState.getState().activeWorkspace:'overview';activate(viewNodes[hash]?hash:(viewNodes[savedWorkspace]?savedWorkspace:'overview'));
  window.addEventListener('popstate',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key,{fromHistory:true})});
  window.addEventListener('hashchange',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key,{fromHistory:true})});
 })();
