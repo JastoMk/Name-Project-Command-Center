@@ -48,6 +48,8 @@ jobs:
           if (!html.includes("selectedAsset:'BTCUSDT'") || !html.includes("setLiveChart(ccGold?ccAsset:'BINANCE:'+ccAsset")) throw new Error('Shared-state default asset restoration is missing');
           if (!html.includes('history.pushState') || !html.includes("addEventListener('popstate'")) throw new Error('Browser history routing is incomplete');
           if (!html.includes('./assets/js/command-center-state.js')) throw new Error('Shared application state controller is not loaded');
+          if ((html.match(/class="cc-view"/g) || []).length !== 9) throw new Error('Expected nine explicit static workspace containers');
+          if (html.includes('mainSections') || html.includes('oldLayout.remove()')) throw new Error('Runtime DOM relocation is still present');
           if (!html.includes("./data/shield-latest.json")) throw new Error('Golden Shield snapshot panel is not wired');
           console.log('HTML structure, DOM references, market fallback, default instrument and Shield panel checks passed.');
           NODE
