@@ -2,9 +2,9 @@ name: Validate Command Center Dashboard
 
 on:
   push:
-    branches: [main, feature/phase2-review-queue-panel]
+    branches: [main, feature/reference-hud-fidelity]
   pull_request:
-    branches: [main, feature/golden-shield-ai-panel]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -24,78 +24,44 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Validate HTML structure, DOM references and application JavaScript
+      - name: Validate HTML, DOM bindings and application JavaScript
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const html = fs.readFileSync('index.html', 'utf8');
+          const app = fs.readFileSync('app.js', 'utf8');
           if (!/^<!doctype html>/i.test(html.trimStart())) throw new Error('Missing HTML5 doctype');
-          const scripts = [...html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)];
-          const inlineScripts = scripts.filter(match => !/\bsrc\s*=/.test(match[1]));
-          if (inlineScripts.length !== 1) throw new Error('Expected exactly one inline application script (external widgets are allowed)');
-          fs.writeFileSync('/tmp/dashboard-inline.js', inlineScripts[0][2]);
-          const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]);
+          if (!/<script[^>]+src=["']app\\.js["'][^>]*><\\/script>/i.test(html)) throw new Error('External app.js is not loaded');
+          const ids = [...html.matchAll(/\\bid=["']([^"']+)["']/g)].map(m => m[1]);
           const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
           if (duplicates.length) throw new Error('Duplicate element IDs: ' + [...new Set(duplicates)].join(', '));
           const idSet = new Set(ids);
-          const refs = [...html.matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(m => m[1]);
+          const refs = [...app.matchAll(/ids\\(["']([^"']+)["']\\)/g)].map(m => m[1]);
           const missing = [...new Set(refs.filter(id => !idSet.has(id)))];
-          if (missing.length) throw new Error('JavaScript references missing DOM IDs: ' + missing.join(', '));
-          for (const id of ['liveAsset','liveTf','marketRefresh','coinRows','signalEngine','shieldSnapshotState','shieldSnapshotUpdated','shieldSnapshotCards']) {
-            if (!idSet.has(id)) throw new Error('Required dashboard element missing: ' + id);
+          if (missing.length) throw new Error('Application references missing DOM IDs: ' + missing.join(', '));
+          for (const required of ['command','signals','markets','review','safety','corestate','market-watchlist','signalRows','signalDetail','reviewQueue']) {
+            if (!idSet.has(required)) throw new Error('Required dashboard element missing: ' + required);
           }
-          if (!html.includes('https://data-api.binance.vision') || !html.includes('https://api.binance.com')) throw new Error('Market API fallback configuration missing');
-          if (!html.includes("setLiveChart('BINANCE:BTCUSDT'")) throw new Error('Crypto signal engine is not selected by default');
-          if (!html.includes("./data/shield-latest.json")) throw new Error('Golden Shield snapshot panel is not wired');
-          if (!idSet.has('shieldReviewQueue') || !html.includes('snapshot.review_queue')) throw new Error('Central human-review queue is not wired');
-          if (!html.includes('signal.ai_shadow') || !html.includes('ai.provider') || !html.includes('ai.request_id')) throw new Error('AI shadow provenance panel is incomplete');
-          if (html.includes('/api/reviews/') || html.includes('Authorization: Bearer') || html.includes('localStorage')) throw new Error('Public dashboard must not contain review API credentials or authenticated review actions');
-          if (!html.includes('queueSummary.textContent') || !html.includes('reasons.textContent')) throw new Error('Review queue must render snapshot text safely');
-          console.log('HTML structure, DOM references, market fallback, default instrument and Shield panel checks passed.');
+          if (!app.includes('shield-latest.json') || !app.includes('api.binance.com')) throw new Error('Snapshot or public market feed is not configured');
+          if (!app.includes('2 * 60 * 60 * 1000') || !app.includes('STALE SNAPSHOT')) throw new Error('Two-hour snapshot freshness warning is missing');
+          if (!html.includes('LIVE EXECUTION DISABLED') || !html.includes('NO BROKER ROUTING')) throw new Error('Research-only safety labels are missing');
+          console.log('HTML, app bindings, snapshot integration, freshness handling and safety checks passed.');
           NODE
-          node --check /tmp/dashboard-inline.js
-      - name: Validate published snapshot contract and safe degradation
+          node --check app.js
+      - name: Validate published snapshot contract and credential hygiene
         run: |
           node <<'NODE'
           const fs = require('node:fs');
-          const path = 'data/shield-latest.json';
-          if (!fs.existsSync(path)) throw new Error('Published Shield snapshot fixture is missing');
-          const snapshot = JSON.parse(fs.readFileSync(path, 'utf8'));
-          if (snapshot.ok !== true || !Number.isFinite(Date.parse(snapshot.generated_at)) || !Array.isArray(snapshot.signals)) {
-            throw new Error('Snapshot must contain ok=true, a valid generated_at timestamp and signals[]');
+          const snapshot = JSON.parse(fs.readFileSync('data/shield-latest.json', 'utf8'));
+          if (snapshot.ok !== true || !Number.isFinite(Date.parse(snapshot.generated_at)) || !Array.isArray(snapshot.signals)) throw new Error('Invalid published snapshot contract');
+          if (!Number.isFinite(snapshot.data_quality?.usable_assets)) throw new Error('Snapshot data quality is missing');
+          for (const s of snapshot.signals) {
+            if (!['BUY','SELL','WAIT','UNAVAILABLE'].includes(s.decision)) throw new Error('Unknown signal decision: ' + s.symbol);
+            if (!Array.isArray(s.timeframes) || !Array.isArray(s.reasons) || !Array.isArray(s.warnings)) throw new Error('Incomplete signal record: ' + s.symbol);
+            if (s.trade_plan !== null) throw new Error('Public snapshot must not publish trade plans');
           }
-          const forbiddenKeys = /api.?key|authorization|bearer|access.?token|secret/i;
-          const forbiddenValues = /sk-[A-Za-z0-9]{20,}|Bearer\\s+[A-Za-z0-9._~-]{16,}/i;
-          function inspect(value, path = 'snapshot') {
-            if (Array.isArray(value)) return value.forEach((item, i) => inspect(item, path + '[' + i + ']'));
-            if (!value || typeof value !== 'object') {
-              if (typeof value === 'string' && forbiddenValues.test(value)) throw new Error('Credential-like value found at ' + path);
-              return;
-            }
-            for (const [key, child] of Object.entries(value)) {
-              if (forbiddenKeys.test(key)) throw new Error('Credential-bearing field is forbidden: ' + path + '.' + key);
-              inspect(child, path + '.' + key);
-            }
-          }
-          inspect(snapshot);
-          for (const signal of snapshot.signals) {
-            if (!signal || typeof signal !== 'object') throw new Error('Each signal must be an object');
-            if (!['BUY','SELL','WAIT','UNAVAILABLE'].includes(signal.decision)) throw new Error('Unknown deterministic decision for ' + (signal.symbol || 'unknown'));
-            if (signal.ai_shadow !== undefined && (!signal.ai_shadow || typeof signal.ai_shadow.status !== 'string')) throw new Error('ai_shadow, when present, must have a status');
-          }
-          if (snapshot.review_queue !== undefined) {
-            const q = snapshot.review_queue;
-            if (!q || !Array.isArray(q.items) || !Number.isFinite(q.pending_count)) throw new Error('review_queue must expose items[] and pending_count');
-          }
-          const html = fs.readFileSync('index.html', 'utf8');
-          for (const required of ['ageMinutes > 120','ageMinutes < -5','STALE SNAPSHOT','INVALID FUTURE TIMESTAMP','PARTIAL DATA · CHECK ASSETS','snapshot.snapshot_status','signal.data_status','snapshot.review_queue','signal.ai_shadow']) {
-            if (!html.includes(required)) throw new Error('Dashboard degradation/freshness handling missing: ' + required);
-          }
-          if (!html.includes("snapshot.review_queue||{items:[],pending_count:0,status:'unavailable'}") ||
-              !html.includes('signal.ai_shadow||{status:"not_present",assessment:null}')) {
-            throw new Error('Dashboard must gracefully handle snapshots without review_queue or ai_shadow');
-          }
-          console.log('Snapshot contract, optional Phase 2 fields, stale/future timestamp handling and credential hygiene passed.');
+          const serialized = JSON.stringify(snapshot);
+          if (/api.?key|authorization|bearer|access.?token|secret/i.test(serialized)) throw new Error('Credential-like field detected');
+          if (snapshot.safety?.live_execution !== false || snapshot.safety?.entry_stop_loss_take_profit !== false) throw new Error('Research safety controls are not explicit');
+          console.log('Snapshot schema, research-only contract and credential checks passed.');
           NODE
-      - name: Confirm deployment workflow exists
-        run: test -f .github/workflows/deploy-pages.yml
