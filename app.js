@@ -45,7 +45,7 @@
       return '<tr><td>'+s.symbol+'</td><td>'+safe(s.decision)+'</td><td>'+safe(s.confidence)+'</td><td>'+safe(s.regime)+'</td><td>'+s.weighted_score+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td></tr>';
     }).join("");
     if (ids("signalRows")) ids("signalRows").innerHTML = rows;
-    if (ids("market-watchlist")) ids("marketRows").innerHTML = signals.map(s => {
+    if (ids("market-watchlist")) ids("market-watchlist").innerHTML = signals.map(s => {
       const q = quotes[s.symbol] || {};
       return '<tr><td>'+s.symbol+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td><td>'+safe(s.decision)+'</td><td>'+safe(s.regime)+'</td></tr>';
     }).join("");
@@ -65,8 +65,10 @@
     text("reviewQueueDetail", snapshot.review_queue ? snapshot.review_queue.pending_count + " pending review items" : "Not reported");
     const stamp = snapshot.generated_at ? new Date(snapshot.generated_at) : null;
     text("updated", stamp ? "SNAPSHOT " + stamp.toISOString().replace("T"," ").slice(0,19) + " UTC" : "SNAPSHOT TIME UNKNOWN");
-    text("feedstate", "SNAPSHOT " + safe(snapshot.snapshot_status) + " · " + (snapshot.source || "SOURCE UNKNOWN"));
-    text("corestate", snapshot.snapshot_status === "complete" ? "THREE ASSET ASSESSMENTS VERIFIED" : "SNAPSHOT PARTIAL · REVIEW REQUIRED");
+    text("feedstate", "SNAPSHOT " + safe(snapshot.snapshot_status) + (snapshotFresh ? " · FRESH" : " · STALE") + " · " + (snapshot.source || "SOURCE UNKNOWN"));
+    const snapshotAge = Date.now() - new Date(snapshot.generated_at).getTime();
+    const snapshotFresh = Number.isFinite(snapshotAge) && snapshotAge >= 0 && snapshotAge <= 2 * 60 * 60 * 1000;
+    text("corestate", snapshot.snapshot_status === "complete" && snapshotFresh ? "THREE ASSET ASSESSMENTS VERIFIED" : "SNAPSHOT STALE OR PARTIAL · REVIEW REQUIRED");
     text("waveState", signals.length + " ASSET ASSESSMENTS");
     const current = signalFor(selectedSymbol) || signals[0];
     if (current) renderDetail(current);
@@ -144,7 +146,10 @@
     if (!data || data.ok !== true || !Array.isArray(data.signals)) throw new Error("Snapshot schema is not valid");
     snapshot = data;
     renderSignals();
-    setPill("arrayStatus", "LIVE SNAPSHOT", "ok");
+    const ageMs = Date.now() - new Date(data.generated_at).getTime();
+    const fresh = Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= 2 * 60 * 60 * 1000;
+    setPill("arrayStatus", fresh ? "LIVE SNAPSHOT" : "STALE SNAPSHOT", fresh ? "ok" : "off");
+    if (!fresh) { text("corestate", "STALE SNAPSHOT · VERIFY BEFORE REVIEW"); text("feedstate", "SNAPSHOT STALE · LAST GENERATED " + (data.generated_at || "UNKNOWN")); }
   }
   async function loadQuotes() {
     const response = await fetch(BINANCE + "/ticker/24hr?symbols=" + encodeURIComponent(JSON.stringify(symbols)), {cache:"no-store"});
