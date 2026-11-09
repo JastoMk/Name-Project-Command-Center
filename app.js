@@ -21,6 +21,7 @@
     return Number.isFinite(n) ? (n > 0 ? "+" : "") + n.toFixed(2) + "%" : "—";
   };
   const safe = value => String(value == null ? "—" : value).replaceAll("_"," ").toUpperCase();
+  const esc = value => String(value == null ? "—" : value).replace(/[&<>"\']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "\'":"&#39;" }[ch]));
   const list = value => Array.isArray(value) ? value : [];
   const signalFor = symbol => list(snapshot && snapshot.signals).find(s => s.symbol === symbol);
 
@@ -31,7 +32,7 @@
   function card(signal) {
     const decision = safe(signal.decision);
     const klass = decision === "BUY" ? "buy" : decision === "SELL" ? "sell" : "wait";
-    return '<article class="signalcard '+klass+'"><span class="sym">'+signal.symbol+'</span><strong>'+decision+'</strong><div class="detail">'+safe(signal.confidence)+' CONFIDENCE · '+safe(signal.regime)+'<br>GRADE '+safe(signal.signal_grade)+' · SCORE '+Number(signal.weighted_score || 0)+'</div></article>';
+    return '<article class="signalcard '+klass+'"><span class="sym">'+esc(signal.symbol)+'</span><strong>'+esc(decision)+'</strong><div class="detail">'+esc(safe(signal.confidence))+' CONFIDENCE · '+esc(safe(signal.regime))+'<br>GRADE '+esc(safe(signal.signal_grade))+' · SCORE '+Number(signal.weighted_score || 0)+'</div></article>';
   }
   function renderSignals() {
     if (!snapshot) return;
@@ -42,12 +43,12 @@
     if (mini) mini.innerHTML = signals.map(card).join("");
     const rows = signals.map(s => {
       const q = quotes[s.symbol] || {};
-      return '<tr><td>'+s.symbol+'</td><td>'+safe(s.decision)+'</td><td>'+safe(s.confidence)+'</td><td>'+safe(s.regime)+'</td><td>'+s.weighted_score+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td></tr>';
+      return '<tr><td>'+esc(s.symbol)+'</td><td>'+esc(safe(s.decision))+'</td><td>'+esc(safe(s.confidence))+'</td><td>'+esc(safe(s.regime))+'</td><td>'+Number(s.weighted_score || 0)+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td></tr>';
     }).join("");
     if (ids("signalRows")) ids("signalRows").innerHTML = rows;
     if (ids("market-watchlist")) ids("market-watchlist").innerHTML = signals.map(s => {
       const q = quotes[s.symbol] || {};
-      return '<tr><td>'+s.symbol+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td><td>'+safe(s.decision)+'</td><td>'+safe(s.regime)+'</td></tr>';
+      return '<tr><td>'+esc(s.symbol)+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td><td>'+esc(safe(s.decision))+'</td><td>'+esc(safe(s.regime))+'</td></tr>';
     }).join("");
     text("signal-count", signals.length + " ASSETS");
     text("coverageText", snapshot.data_quality && snapshot.data_quality.usable_assets || signals.length);
@@ -85,14 +86,14 @@
       ["Reason",list(s.reasons).join(" · ") || "No reason supplied"],
       ["Warnings",list(s.warnings).join(" · ") || "None reported"]
     ];
-    if (ids("signalDetail")) ids("signalDetail").innerHTML = rows.map(r => '<div class="data-row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join("");
+    if (ids("signalDetail")) ids("signalDetail").innerHTML = rows.map(r => '<div class="data-row"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("");
     const byTf = list(s.timeframes);
     const direction = safe(s.decision);
     if (ids("vectorBars")) ids("vectorBars").innerHTML = ["H4","H1","M15","M5"].map(tf => {
       const item = byTf.find(t => t.timeframe === tf);
       const match = item && safe(item.direction) === direction;
       const h = item ? Math.max(12,Math.min(100,Number(item.adx || 0))) : 12;
-      return '<i title="'+tf+' · '+(item ? safe(item.direction) : "NO DATA")+'" style="height:'+h+'%;opacity:'+(match ? 1 : .45)+'"></i>';
+      return '<i title="'+esc(tf+' · '+(item ? safe(item.direction) : "NO DATA"))+'" style="height:'+h+'%;opacity:'+(match ? 1 : .45)+'"></i>'; 
     }).join("");
   }
   function renderNoise(signals) {
