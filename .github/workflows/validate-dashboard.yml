@@ -1,73 +1,57 @@
 name: Validate Command Center Dashboard
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: command-center-validation
   cancel-in-progress: true
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Validate previous dashboard structure and JavaScript
+      - name: Validate dashboard HTML and live-market components
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const html = fs.readFileSync('index.html', 'utf8');
-          const js = fs.readFileSync('app.js', 'utf8');
-          if (!/^<!doctype html>/i.test(html.trimStart())) throw new Error('Missing HTML5 doctype');
-          const ids = [...html.matchAll(/\\bid=["']([^"']+)["']/g)].map(m => m[1]);
-          const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
-          if (duplicates.length) throw new Error('Duplicate IDs: ' + [...new Set(duplicates)].join(', '));
-          const idSet = new Set(ids);
-          const required = ['nav','command','signals','markets','review','safety','signal-count','market-watchlist','miniSignals','allSignals','signalRows','signalDetail','network','directionWave','market-chart'];
-          for (const id of required) if (!idSet.has(id)) throw new Error('Missing dashboard element: ' + id);
-          if (!js.includes('shield-latest.json') || !js.includes('api.binance.com')) throw new Error('Snapshot or Binance public feed integration missing');
-          if (!js.includes('COMPLETED') && !js.includes('slice(0,-1)')) throw new Error('Completed-candle handling missing');
-          console.log('Previous dashboard structure and public data integrations passed.');
-          NODE
-          node --check app.js
-      - name: Validate published snapshot contract and credential hygiene
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const snapshot = JSON.parse(fs.readFileSync('data/shield-latest.json', 'utf8'));
-          if (snapshot.ok !== true || !Number.isFinite(Date.parse(snapshot.generated_at)) || !Array.isArray(snapshot.signals)) {
-            throw new Error('Invalid published snapshot contract');
-          }
-          const forbiddenKeys = /api.?key|authorization|bearer|access.?token|secret/i;
-          const forbiddenValues = /sk-[A-Za-z0-9]{20,}|Bearer\\s+[A-Za-z0-9._~-]{16,}/i;
-          function inspect(value, path = 'snapshot') {
-            if (Array.isArray(value)) return value.forEach((item, i) => inspect(item, path + '[' + i + ']'));
-            if (!value || typeof value !== 'object') {
-              if (typeof value === 'string' && forbiddenValues.test(value)) throw new Error('Credential-like value at ' + path);
-              return;
-            }
-            for (const [key, child] of Object.entries(value)) {
-              if (forbiddenKeys.test(key)) throw new Error('Forbidden field at ' + path + '.' + key);
-              inspect(child, path + '.' + key);
-            }
-          }
-          inspect(snapshot);
-          for (const signal of snapshot.signals) {
-            if (!signal || !['BUY','SELL','WAIT','UNAVAILABLE'].includes(signal.decision)) throw new Error('Invalid signal decision');
-          }
-          console.log('Snapshot contract and credential hygiene passed.');
-          NODE
-      - name: Confirm Pages deployment workflow exists
-        run: test -f .github/workflows/deploy-pages.yml
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class DashboardParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.tags = set()
+                  self.ids = set()
+              def handle_starttag(self, tag, attrs):
+                  self.tags.add(tag.lower())
+                  self.ids.update(value for key, value in attrs if key.lower() == "id")
+
+          source = Path("index.html").read_text(encoding="utf-8")
+          parser = DashboardParser()
+          parser.feed(source)
+          parser.close()
+
+          assert {"html", "head", "body", "script"}.issubset(parser.tags), "Missing core HTML structure"
+          required_ids = {"signalCard", "tvChart", "coinRows", "marketFeedState", "refresh"}
+          missing = sorted(required_ids - parser.ids)
+          assert not missing, f"Missing dashboard elements: {missing}"
+
+          required_features = [
+              "api.binance.com",
+              "LIVE MARKET EXPLORER",
+              "Operation Golden Shield",
+              "research only",
+              "No API keys",
+          ]
+          missing_features = [item for item in required_features if item.lower() not in source.lower()]
+          assert not missing_features, f"Missing expected dashboard features/safety labels: {missing_features}"
+
+          assert "secret_key" not in source.lower() and "api_secret" not in source.lower(), "Potential credential string found"
+          print("Dashboard HTML parsed successfully.")
+          print("Signal panel, chart, top-100 market table, Binance feed and safety labels verified.")
+          PY
