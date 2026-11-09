@@ -65,15 +65,14 @@
     text("reviewQueueDetail", snapshot.review_queue ? snapshot.review_queue.pending_count + " pending review items" : "Not reported");
     const stamp = snapshot.generated_at ? new Date(snapshot.generated_at) : null;
     text("updated", stamp ? "SNAPSHOT " + stamp.toISOString().replace("T"," ").slice(0,19) + " UTC" : "SNAPSHOT TIME UNKNOWN");
-    text("feedstate", "SNAPSHOT " + safe(snapshot.snapshot_status) + (snapshotFresh ? " · FRESH" : " · STALE") + " · " + (snapshot.source || "SOURCE UNKNOWN"));
     const snapshotAge = Date.now() - new Date(snapshot.generated_at).getTime();
     const snapshotFresh = Number.isFinite(snapshotAge) && snapshotAge >= 0 && snapshotAge <= 2 * 60 * 60 * 1000;
+    text("feedstate", "SNAPSHOT " + safe(snapshot.snapshot_status) + (snapshotFresh ? " · FRESH" : " · STALE") + " · " + (snapshot.source || "SOURCE UNKNOWN"));
     text("corestate", snapshot.snapshot_status === "complete" && snapshotFresh ? "THREE ASSET ASSESSMENTS VERIFIED" : "SNAPSHOT STALE OR PARTIAL · REVIEW REQUIRED");
     text("waveState", signals.length + " ASSET ASSESSMENTS");
     const current = signalFor(selectedSymbol) || signals[0];
     if (current) renderDetail(current);
     renderNoise(signals);
-    renderVector(signals);
     renderVector(signals);
   }
   function renderDetail(s) {
