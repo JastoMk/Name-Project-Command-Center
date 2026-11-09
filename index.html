@@ -275,7 +275,7 @@ function renderGoldResearch(gold,staleSnapshot=false,futureTimestamp=false){
   const last=gold.latest_completed_m5_at?new Date(gold.latest_completed_m5_at):null;
   get('goldDataStatus').textContent=(staleSnapshot||futureTimestamp)?'SNAPSHOT STALE':status;
   get('goldFeedAge').textContent='Feed age: '+age+' · '+String(gold.source||'source unavailable');
-  get('goldCandidate').textContent=['BUY','SELL'].includes(gold.candidate_decision)?gold.candidate_decision:'WAIT';
+  get('goldCandidate').textContent=(!staleSnapshot&&!futureTimestamp&&['BUY','SELL'].includes(gold.candidate_decision))?gold.candidate_decision:'WAIT';
   // The dashboard independently enforces WAIT; a candidate is never an approved signal.
   get('goldDisplayDecision').textContent='WAIT';
   get('goldLatestBar').textContent=last&&Number.isFinite(last.getTime())?last.toLocaleTimeString():'—';
