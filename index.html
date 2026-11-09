@@ -255,7 +255,7 @@ $('liveTf').addEventListener('change',()=>{const v=$('liveAsset').dataset.curren
 $('marketRefresh').addEventListener('click',refreshLiveMarkets);$('coinSearch').addEventListener('input',renderCoins);
 setLiveChart('BINANCE:BTCUSDT','BTC / USDT','Binance · TradingView');refreshLiveMarkets();marketTimer=setInterval(refreshLiveMarkets,30000);
 
-function renderGoldResearch(gold,staleSnapshot=false,futureTimestamp=false){
+function renderGoldResearch(gold,staleSnapshot=false,futureTimestamp=false,snapshotAgeMinutes=0){
   const get=id=>document.getElementById(id);
   if(!gold){
     get('goldDataStatus').textContent='UNAVAILABLE';
@@ -271,11 +271,13 @@ function renderGoldResearch(gold,staleSnapshot=false,futureTimestamp=false){
     return;
   }
   const status=String(gold.data_status||'unavailable').toUpperCase().replaceAll('_',' ');
-  const age=Number.isFinite(gold.feed_age_minutes)?gold.feed_age_minutes.toFixed(1)+' min old':'age unavailable';
+  const effectiveAge=Number.isFinite(gold.feed_age_minutes)?gold.feed_age_minutes+Math.max(0,snapshotAgeMinutes):null;
+  const goldStale=staleSnapshot||futureTimestamp||(effectiveAge!==null&&effectiveAge>75);
+  const age=effectiveAge!==null?effectiveAge.toFixed(1)+' min old':'age unavailable';
   const last=gold.latest_completed_m5_at?new Date(gold.latest_completed_m5_at):null;
-  get('goldDataStatus').textContent=(staleSnapshot||futureTimestamp)?'SNAPSHOT STALE':status;
+  get('goldDataStatus').textContent=goldStale?'STALE · WAIT':status;
   get('goldFeedAge').textContent='Feed age: '+age+' · '+String(gold.source||'source unavailable');
-  get('goldCandidate').textContent=(!staleSnapshot&&!futureTimestamp&&['BUY','SELL'].includes(gold.candidate_decision))?gold.candidate_decision:'WAIT';
+  get('goldCandidate').textContent=(!goldStale&&['BUY','SELL'].includes(gold.candidate_decision))?gold.candidate_decision:'WAIT';
   // The dashboard independently enforces WAIT; a candidate is never an approved signal.
   get('goldDisplayDecision').textContent='WAIT';
   get('goldLatestBar').textContent=last&&Number.isFinite(last.getTime())?last.toLocaleTimeString():'—';
@@ -283,8 +285,8 @@ function renderGoldResearch(gold,staleSnapshot=false,futureTimestamp=false){
   const counts=gold.completed_candle_counts||{};
   get('goldBarCounts').textContent=['H4','H1','M15','M5'].map(k=>k+' '+(counts[k]??0)).join(' · ');
   get('goldValidationStatus').textContent='BLOCKED · '+String(gold.validation_status||'unvalidated').replaceAll('_',' ').toUpperCase();
-  get('goldValidationTag').textContent='SIGNAL BLOCKED';
-  get('goldReasons').textContent=(Array.isArray(gold.reasons)?gold.reasons.join(' · '):'No diagnostic reason supplied.')+' · Candidate only; published decision remains WAIT.';
+  get('goldValidationTag').textContent=goldStale?'STALE · WAIT':'SIGNAL BLOCKED';
+  get('goldReasons').textContent=(Array.isArray(gold.reasons)?gold.reasons.join(' · '):'No diagnostic reason supplied.')+(goldStale?' · Snapshot/feed is stale; candidate suppressed.':'')+' · Candidate only; published decision remains WAIT.';
   const warnings=Array.isArray(gold.warnings)?gold.warnings:[];
   get('goldWarnings').textContent=warnings.join(' · ')||'Research only · no approved signal · execution disabled.';
 }
@@ -306,7 +308,7 @@ async function refreshGoldenShieldSnapshot(){
     state.textContent=futureTimestamp?'INVALID FUTURE TIMESTAMP':(staleSnapshot?'STALE SNAPSHOT':(partialSnapshot?'PARTIAL DATA · CHECK ASSETS':'CONNECTED · RESEARCH ONLY'));
     state.className='tag '+((staleSnapshot||partialSnapshot)?'wait':'');
     updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(futureTimestamp?' · Snapshot timestamp is more than 5 minutes in the future; treat data as invalid.':(staleSnapshot?' · Older than 2 hours; do not rely on it.':(partialSnapshot?' · One or more asset feeds failed; inspect each asset status before use.':' · Snapshot is within the 2-hour freshness window.')));
-    renderGoldResearch(snapshot.gold,staleSnapshot,futureTimestamp);
+    renderGoldResearch(snapshot.gold,staleSnapshot,futureTimestamp,ageMinutes);
     const reviewHost=document.getElementById('shieldReviewQueue');
     if(reviewHost){
       reviewHost.replaceChildren();
