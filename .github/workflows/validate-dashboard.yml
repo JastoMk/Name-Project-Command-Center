@@ -1,57 +1,101 @@
 name: Validate Command Center Dashboard
+
 on:
   push:
-    branches: [main]
+    branches: [main, feature/phase2-review-queue-panel]
   pull_request:
-    branches: [main]
+    branches: [main, feature/golden-shield-ai-panel]
   workflow_dispatch:
+
 permissions:
   contents: read
+
 concurrency:
   group: command-center-validation
   cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate dashboard HTML and live-market components
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Validate HTML structure, DOM references and application JavaScript
         run: |
-          python - <<'PY'
-          from html.parser import HTMLParser
-          from pathlib import Path
-
-          class DashboardParser(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.tags = set()
-                  self.ids = set()
-              def handle_starttag(self, tag, attrs):
-                  self.tags.add(tag.lower())
-                  self.ids.update(value for key, value in attrs if key.lower() == "id")
-
-          source = Path("index.html").read_text(encoding="utf-8")
-          parser = DashboardParser()
-          parser.feed(source)
-          parser.close()
-
-          assert {"html", "head", "body", "script"}.issubset(parser.tags), "Missing core HTML structure"
-          required_ids = {"signalCard", "tvChart", "coinRows", "marketFeedState", "refresh"}
-          missing = sorted(required_ids - parser.ids)
-          assert not missing, f"Missing dashboard elements: {missing}"
-
-          required_features = [
-              "api.binance.com",
-              "LIVE MARKET EXPLORER",
-              "Operation Golden Shield",
-              "research only",
-              "No API keys",
-          ]
-          missing_features = [item for item in required_features if item.lower() not in source.lower()]
-          assert not missing_features, f"Missing expected dashboard features/safety labels: {missing_features}"
-
-          assert "secret_key" not in source.lower() and "api_secret" not in source.lower(), "Potential credential string found"
-          print("Dashboard HTML parsed successfully.")
-          print("Signal panel, chart, top-100 market table, Binance feed and safety labels verified.")
-          PY
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          if (!/^<!doctype html>/i.test(html.trimStart())) throw new Error('Missing HTML5 doctype');
+          const scripts = [...html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)];
+          const inlineScripts = scripts.filter(match => !/\bsrc\s*=/.test(match[1]));
+          if (inlineScripts.length !== 1) throw new Error('Expected exactly one inline application script (external widgets are allowed)');
+          fs.writeFileSync('/tmp/dashboard-inline.js', inlineScripts[0][2]);
+          const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]);
+          const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
+          if (duplicates.length) throw new Error('Duplicate element IDs: ' + [...new Set(duplicates)].join(', '));
+          const idSet = new Set(ids);
+          const refs = [...html.matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(m => m[1]);
+          const missing = [...new Set(refs.filter(id => !idSet.has(id)))];
+          if (missing.length) throw new Error('JavaScript references missing DOM IDs: ' + missing.join(', '));
+          for (const id of ['liveAsset','liveTf','marketRefresh','coinRows','signalEngine','shieldSnapshotState','shieldSnapshotUpdated','shieldSnapshotCards']) {
+            if (!idSet.has(id)) throw new Error('Required dashboard element missing: ' + id);
+          }
+          if (!html.includes('https://data-api.binance.vision') || !html.includes('https://api.binance.com')) throw new Error('Market API fallback configuration missing');
+          if (!html.includes("setLiveChart('BINANCE:BTCUSDT'")) throw new Error('Crypto signal engine is not selected by default');
+          if (!html.includes("./data/shield-latest.json")) throw new Error('Golden Shield snapshot panel is not wired');
+          if (!idSet.has('shieldReviewQueue') || !html.includes('snapshot.review_queue')) throw new Error('Central human-review queue is not wired');
+          if (!html.includes('signal.ai_shadow') || !html.includes('ai.provider') || !html.includes('ai.request_id')) throw new Error('AI shadow provenance panel is incomplete');
+          if (html.includes('/api/reviews/') || html.includes('Authorization: Bearer') || html.includes('localStorage')) throw new Error('Public dashboard must not contain review API credentials or authenticated review actions');
+          if (!html.includes('queueSummary.textContent') || !html.includes('reasons.textContent')) throw new Error('Review queue must render snapshot text safely');
+          console.log('HTML structure, DOM references, market fallback, default instrument and Shield panel checks passed.');
+          NODE
+          node --check /tmp/dashboard-inline.js
+      - name: Validate published snapshot contract and safe degradation
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'data/shield-latest.json';
+          if (!fs.existsSync(path)) throw new Error('Published Shield snapshot fixture is missing');
+          const snapshot = JSON.parse(fs.readFileSync(path, 'utf8'));
+          if (snapshot.ok !== true || !Number.isFinite(Date.parse(snapshot.generated_at)) || !Array.isArray(snapshot.signals)) {
+            throw new Error('Snapshot must contain ok=true, a valid generated_at timestamp and signals[]');
+          }
+          const forbiddenKeys = /api.?key|authorization|bearer|access.?token|secret/i;
+          const forbiddenValues = /sk-[A-Za-z0-9]{20,}|Bearer\\s+[A-Za-z0-9._~-]{16,}/i;
+          function inspect(value, path = 'snapshot') {
+            if (Array.isArray(value)) return value.forEach((item, i) => inspect(item, path + '[' + i + ']'));
+            if (!value || typeof value !== 'object') {
+              if (typeof value === 'string' && forbiddenValues.test(value)) throw new Error('Credential-like value found at ' + path);
+              return;
+            }
+            for (const [key, child] of Object.entries(value)) {
+              if (forbiddenKeys.test(key)) throw new Error('Credential-bearing field is forbidden: ' + path + '.' + key);
+              inspect(child, path + '.' + key);
+            }
+          }
+          inspect(snapshot);
+          for (const signal of snapshot.signals) {
+            if (!signal || typeof signal !== 'object') throw new Error('Each signal must be an object');
+            if (!['BUY','SELL','WAIT','UNAVAILABLE'].includes(signal.decision)) throw new Error('Unknown deterministic decision for ' + (signal.symbol || 'unknown'));
+            if (signal.ai_shadow !== undefined && (!signal.ai_shadow || typeof signal.ai_shadow.status !== 'string')) throw new Error('ai_shadow, when present, must have a status');
+          }
+          if (snapshot.review_queue !== undefined) {
+            const q = snapshot.review_queue;
+            if (!q || !Array.isArray(q.items) || !Number.isFinite(q.pending_count)) throw new Error('review_queue must expose items[] and pending_count');
+          }
+          const html = fs.readFileSync('index.html', 'utf8');
+          for (const required of ['ageMinutes > 120','ageMinutes < -5','STALE SNAPSHOT','INVALID FUTURE TIMESTAMP','PARTIAL DATA · CHECK ASSETS','snapshot.snapshot_status','signal.data_status','snapshot.review_queue','signal.ai_shadow']) {
+            if (!html.includes(required)) throw new Error('Dashboard degradation/freshness handling missing: ' + required);
+          }
+          if (!html.includes("snapshot.review_queue||{items:[],pending_count:0,status:'unavailable'}") ||
+              !html.includes('signal.ai_shadow||{status:"not_present",assessment:null}')) {
+            throw new Error('Dashboard must gracefully handle snapshots without review_queue or ai_shadow');
+          }
+          console.log('Snapshot contract, optional Phase 2 fields, stale/future timestamp handling and credential hygiene passed.');
+          NODE
+      - name: Confirm deployment workflow exists
+        run: test -f .github/workflows/deploy-pages.yml
