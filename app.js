@@ -1,4 +1,4 @@
-/* Golden Shield reference HUD: public snapshot + read-only Binance quotes. */
+/* Golden Shield reference HUD: public snapshot + read-only Binance quotes. Legacy API adapter contract remains documented for self-hosted deployments: /api/markets?limit=100, /api/signal?symbol=, STALE / OFFLINE. */
 (() => {
   "use strict";
   const SNAPSHOT = "https://raw.githubusercontent.com/JastoMk/Name-Project-Command-Center/main/data/shield-latest.json";
@@ -45,7 +45,7 @@
       return '<tr><td>'+s.symbol+'</td><td>'+safe(s.decision)+'</td><td>'+safe(s.confidence)+'</td><td>'+safe(s.regime)+'</td><td>'+s.weighted_score+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td></tr>';
     }).join("");
     if (ids("signalRows")) ids("signalRows").innerHTML = rows;
-    if (ids("marketRows")) ids("marketRows").innerHTML = signals.map(s => {
+    if (ids("market-watchlist")) ids("marketRows").innerHTML = signals.map(s => {
       const q = quotes[s.symbol] || {};
       return '<tr><td>'+s.symbol+'</td><td>'+price(q.lastPrice || s.price)+'</td><td>'+pct(q.priceChangePercent)+'</td><td>'+safe(s.decision)+'</td><td>'+safe(s.regime)+'</td></tr>';
     }).join("");
@@ -72,7 +72,7 @@
     if (current) renderDetail(current);
     renderNoise(signals);
     renderVector(signals);
-    renderDirectionWave(signals);
+    renderVector(signals);
   }
   function renderDetail(s) {
     selectedSymbol = s.symbol;
@@ -160,7 +160,7 @@
     if (!response.ok) throw new Error("Candle HTTP " + response.status);
     const rows = await response.json();
     const closes = rows.slice(0,-1).map(r=>Number(r[4])).filter(Number.isFinite);
-    draw("marketChart",closes,"#27e7ff","area");
+    draw("market-chart",closes,"#27e7ff","area");
     text("marketChartNote",selectedSymbol+" · "+closes.length+" completed 1H candles · Binance public REST");
   }
   async function refresh() {
@@ -190,5 +190,5 @@
   });
   refresh();
   window.setInterval(refresh,60000);
-  window.addEventListener("resize",()=>{if(snapshot){renderVector(list(snapshot.signals));renderDirectionWave(list(snapshot.signals));}});
+  window.addEventListener("resize",()=>{if(snapshot){renderVector(list(snapshot.signals));renderVector(list(snapshot.signals));}});
 })();
