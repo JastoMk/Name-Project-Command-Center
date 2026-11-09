@@ -21,7 +21,7 @@
     return Number.isFinite(n) ? (n > 0 ? "+" : "") + n.toFixed(2) + "%" : "—";
   };
   const safe = value => String(value == null ? "—" : value).replaceAll("_"," ").toUpperCase();
-  const esc = value => String(value == null ? "—" : value).replace(/[&<>"\']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "\'":"&#39;" }[ch]));
+  const esc = value => String(value == null ? "—" : value).replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
   const list = value => Array.isArray(value) ? value : [];
   const signalFor = symbol => list(snapshot && snapshot.signals).find(s => s.symbol === symbol);
 
