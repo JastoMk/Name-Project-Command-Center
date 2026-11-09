@@ -255,6 +255,41 @@ $('liveTf').addEventListener('change',()=>{const v=$('liveAsset').dataset.curren
 $('marketRefresh').addEventListener('click',refreshLiveMarkets);$('coinSearch').addEventListener('input',renderCoins);
 setLiveChart('BINANCE:BTCUSDT','BTC / USDT','Binance · TradingView');refreshLiveMarkets();marketTimer=setInterval(refreshLiveMarkets,30000);
 
+function renderGoldResearch(gold,staleSnapshot=false,futureTimestamp=false,snapshotAgeMinutes=0){
+  const get=id=>document.getElementById(id);
+  if(!gold){
+    get('goldDataStatus').textContent='UNAVAILABLE';
+    get('goldCandidate').textContent='WAIT';
+    get('goldDisplayDecision').textContent='WAIT';
+    get('goldLatestBar').textContent='—';
+    get('goldSnapshotPrice').textContent='Price unavailable';
+    get('goldBarCounts').textContent='—';
+    get('goldValidationStatus').textContent='BLOCKED · NO SNAPSHOT';
+    get('goldReasons').textContent='No Gold research assessment is present in the published snapshot. Fail-safe decision: WAIT.';
+    get('goldFeedAge').textContent='No feed data';
+    get('goldWarnings').textContent='Research only · no approved signal · execution disabled.';
+    return;
+  }
+  const status=String(gold.data_status||'unavailable').toUpperCase().replaceAll('_',' ');
+  const effectiveAge=Number.isFinite(gold.feed_age_minutes)?gold.feed_age_minutes+Math.max(0,snapshotAgeMinutes):null;
+  const goldStale=staleSnapshot||futureTimestamp||(effectiveAge!==null&&effectiveAge>75);
+  const age=effectiveAge!==null?effectiveAge.toFixed(1)+' min old':'age unavailable';
+  const last=gold.latest_completed_m5_at?new Date(gold.latest_completed_m5_at):null;
+  get('goldDataStatus').textContent=goldStale?'STALE · WAIT':status;
+  get('goldFeedAge').textContent='Feed age: '+age+' · '+String(gold.source||'source unavailable');
+  get('goldCandidate').textContent=(!goldStale&&['BUY','SELL'].includes(gold.candidate_decision))?gold.candidate_decision:'WAIT';
+  // The dashboard independently enforces WAIT; a candidate is never an approved signal.
+  get('goldDisplayDecision').textContent='WAIT';
+  get('goldLatestBar').textContent=last&&Number.isFinite(last.getTime())?last.toLocaleTimeString():'—';
+  get('goldSnapshotPrice').textContent=Number.isFinite(gold.price)?'Proxy price: '+gold.price.toLocaleString(undefined,{maximumFractionDigits:2}):'Price unavailable';
+  const counts=gold.completed_candle_counts||{};
+  get('goldBarCounts').textContent=['H4','H1','M15','M5'].map(k=>k+' '+(counts[k]??0)).join(' · ');
+  get('goldValidationStatus').textContent='BLOCKED · '+String(gold.validation_status||'unvalidated').replaceAll('_',' ').toUpperCase();
+  get('goldValidationTag').textContent=goldStale?'STALE · WAIT':'SIGNAL BLOCKED';
+  get('goldReasons').textContent=(Array.isArray(gold.reasons)?gold.reasons.join(' · '):'No diagnostic reason supplied.')+(goldStale?' · Snapshot/feed is stale; candidate suppressed.':'')+' · Candidate only; published decision remains WAIT.';
+  const warnings=Array.isArray(gold.warnings)?gold.warnings:[];
+  get('goldWarnings').textContent=warnings.join(' · ')||'Research only · no approved signal · execution disabled.';
+}
 async function refreshGoldenShieldSnapshot(){
   const state=document.getElementById('shieldSnapshotState');
   const updated=document.getElementById('shieldSnapshotUpdated');
@@ -273,6 +308,7 @@ async function refreshGoldenShieldSnapshot(){
     state.textContent=futureTimestamp?'INVALID FUTURE TIMESTAMP':(staleSnapshot?'STALE SNAPSHOT':(partialSnapshot?'PARTIAL DATA · CHECK ASSETS':'CONNECTED · RESEARCH ONLY'));
     state.className='tag '+((staleSnapshot||partialSnapshot)?'wait':'');
     updated.textContent='Last Shield run: '+generated.toLocaleString()+' · '+snapshot.source+' · '+snapshot.scope+(futureTimestamp?' · Snapshot timestamp is more than 5 minutes in the future; treat data as invalid.':(staleSnapshot?' · Older than 2 hours; do not rely on it.':(partialSnapshot?' · One or more asset feeds failed; inspect each asset status before use.':' · Snapshot is within the 2-hour freshness window.')));
+    renderGoldResearch(snapshot.gold,staleSnapshot,futureTimestamp,ageMinutes);
     const reviewHost=document.getElementById('shieldReviewQueue');
     if(reviewHost){
       reviewHost.replaceChildren();
@@ -337,6 +373,7 @@ async function refreshGoldenShieldSnapshot(){
       container.append(card);
     }
   }catch(error){
+    renderGoldResearch(null);
     state.textContent='NOT CONNECTED';
     state.className='tag wait';
     updated.textContent=error.message+' · The dashboard’s browser-side calculator is not a substitute for the Shield engine.';
@@ -406,7 +443,7 @@ setInterval(refreshGoldenShieldSnapshot,60000);
   workspace.append(view);
  });
  const gold=viewNodes.gold;
- gold.innerHTML='<div class="gold-hero"><div><div class="eyebrow">PRECIOUS METALS MODULE</div><h2>Gold · XAU/USD</h2><p>Dedicated gold workspace. Chart data is provided by OANDA through TradingView, independently of Binance crypto data.</p></div><button class="gold-action" id="ccOpenGoldChart">OPEN GOLD CHART ↗</button></div><div class="panel"><div class="panelhead"><h2>Gold research status</h2><span class="tag wait">MODEL NOT VALIDATED</span></div><div class="metrics"><div class="metric"><label>Market instrument</label><strong>XAU/USD</strong><small>OANDA indicative feed</small></div><div class="metric"><label>Golden Shield signal</label><strong>Unavailable</strong><small>No validated gold signal model</small></div><div class="metric"><label>Broker sizing</label><strong>Blocked</strong><small>MT5 contract specifications unverified</small></div><div class="metric"><label>Execution</label><strong>Disabled</strong><small>Research only</small></div></div><p class="gold-note">Important: the live chart is not an Exness XAUUSDc execution feed. PAXGUSDT is a tokenised-gold crypto asset, not spot XAUUSD. No gold entry, stop, target or lot size is generated by this module.</p></div>';
+ gold.innerHTML='<div class="gold-hero"><div><div class="eyebrow">PRECIOUS METALS MODULE</div><h2>Gold · XAU/USD</h2><p>Dedicated Gold research workspace. Live chart data is OANDA/TradingView; the Shield research feed is sourced separately from public Dukascopy bid/ask candles.</p></div><button class="gold-action" id="ccOpenGoldChart">OPEN GOLD CHART ↗</button></div><div class="panel"><div class="panelhead"><h2>Gold research status</h2><span class="tag wait" id="goldValidationTag">SIGNAL BLOCKED</span></div><div class="metrics"><div class="metric"><label>Research feed</label><strong id="goldDataStatus">UNAVAILABLE</strong><small id="goldFeedAge">Waiting for Gold snapshot</small></div><div class="metric"><label>Candidate direction</label><strong id="goldCandidate">WAIT</strong><small>Experimental · not approved</small></div><div class="metric"><label>Published decision</label><strong id="goldDisplayDecision">WAIT</strong><small>Fail-safe display · execution disabled</small></div><div class="metric"><label>Last completed M5</label><strong id="goldLatestBar">—</strong><small id="goldSnapshotPrice">Price unavailable</small></div></div><div class="sideitem"><span>Completed bars</span><strong id="goldBarCounts">—</strong></div><div class="sideitem"><span>Validation gate</span><strong id="goldValidationStatus">BLOCKED · NEGATIVE OOS</strong></div><div class="gold-note" id="goldReasons">Waiting for the next published Gold research snapshot. No Gold trade signal is approved.</div><p class="footnote" id="goldWarnings">Research only. No broker sizing, entry, stop, target or execution.</p><p class="footnote">Important: the live chart is not an Exness XAUUSDc execution feed. The public Dukascopy XAU/USD proxy is separate from your broker feed. No gold entry, stop, target or lot size is generated by this module.</p></div>';
  const footer=document.querySelector('footer.footnote');if(footer)workspace.append(footer);
  app.append(sidebar,workspace);header.after(app);oldLayout.remove();
  Object.entries(labels).forEach(([key,data])=>{
