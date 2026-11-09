@@ -194,5 +194,5 @@
   });
   refresh();
   window.setInterval(refresh,60000);
-  window.addEventListener("resize",()=>{if(snapshot){renderVector(list(snapshot.signals));renderVector(list(snapshot.signals));}});
+  window.addEventListener("resize",()=>{if(snapshot){renderVector(list(snapshot.signals));}});
 })();
