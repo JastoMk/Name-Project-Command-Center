@@ -269,10 +269,12 @@ async function refreshLiveMarkets(){if(marketRefreshInFlight)return;marketRefres
   const excluded=/(UP|DOWN|BULL|BEAR|[0-9]+[LS])$/;
   const stable=/^(USDT|USDC|FDUSD|TUSD|BUSD|DAI|USDP|USD1|USDE|USDS|PYUSD|FRAX|EUR|TRY|BRL|GBP|AUD|JPY|BIDR|IDRT|UAH|RUB|ZAR)$/;
   const nextCoins=data.filter(x=>{
-    if(!x||typeof x!=='object'||typeof x.symbol!=='string'||typeof x.baseAsset!=='string'||!x.symbol.endsWith('USDT')||x.symbol==='USDTUSDT'||excluded.test(x.baseAsset)||stable.test(x.baseAsset))return false;
+    if(!x||typeof x!=='object'||typeof x.symbol!=='string'||!x.symbol.endsWith('USDT')||x.symbol==='USDTUSDT')return false;
+    const baseAsset=x.symbol.slice(0,-4);
+    if(!baseAsset||excluded.test(baseAsset)||stable.test(baseAsset))return false;
     const last=Number(x.lastPrice),high=Number(x.highPrice),low=Number(x.lowPrice),change=Number(x.priceChangePercent),volume=Number(x.quoteVolume);
     return Number.isFinite(last)&&last>0&&Number.isFinite(high)&&Number.isFinite(low)&&high>=Math.max(last,low)&&low<=Math.min(last,high)&&Number.isFinite(change)&&Number.isFinite(volume)&&volume>=0;
-  }).sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume)).slice(0,100);
+  }).map(x=>({...x,baseAsset:x.symbol.slice(0,-4)})).sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume)).slice(0,100);
   if(!nextCoins.length)throw Error('Binance returned no eligible USDT spot markets');
   liveCoins=nextCoins;lastMarketSuccessAt=Date.now();$('coinCount').textContent=liveCoins.length;$('marketUpdated').textContent=new Date(lastMarketSuccessAt).toLocaleTimeString();$('coinTableStatus').textContent='Showing '+liveCoins.length+' highest-volume eligible Binance USDT spot pairs';state.textContent='CONNECTED';detail.textContent='Binance REST · refreshed '+new Date(lastMarketSuccessAt).toLocaleTimeString()+' · next check in 30s';renderCoins();renderOpportunityRadar();
 }catch(e){state.textContent='STALE / FEED ERROR';detail.textContent=(lastMarketSuccessAt?'Last successful update '+new Date(lastMarketSuccessAt).toLocaleTimeString()+' · ':'')+e.message;$('coinTableStatus').textContent=liveCoins.length?'Showing last successful data · verify its timestamp':'Unable to load market data.'}finally{marketRefreshInFlight=false}}
