@@ -604,6 +604,7 @@ setInterval(refreshGoldenShieldSnapshot,60000);
   alert(isIOS?'To install: tap Share, then “Add to Home Screen”.':'To install: open your browser menu (⋮) and choose “Install app” or “Add to Home screen”. If the option is missing, reload this page once while online.');
  });
  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Offline app support unavailable:',error)))}
+ window.__goldenShieldPwaHandlerReady=true;
  refreshInstallButton();
 })();
 </script>
