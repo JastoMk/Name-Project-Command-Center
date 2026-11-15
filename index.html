@@ -140,7 +140,37 @@ body{min-height:100vh}
 }
 @media(max-width:390px){.topright span:first-child{display:none}.cc-page-kicker{display:none}.cc-view[data-view=overview] #liveMarkets .livechartframe{height:195px}}
 
-\n/* Gold workspace: dedicated live chart, separate from validated Shield research. */\n.cc-view[data-view=gold] .gold-live-chart{height:clamp(340px,58vh,620px);min-height:340px;border:1px solid #1d5268;background:#07111d;overflow:hidden}\n.cc-view[data-view=gold] .gold-live-chart iframe{width:100%;height:100%;border:0}\n.cc-view[data-view=gold] .gold-hero{grid-template-columns:minmax(0,1fr) auto}\n@media(max-width:560px){.cc-view[data-view=gold] .gold-live-chart{height:430px;min-height:360px}}\n</style></head>
+\n/* Gold workspace: dedicated live chart, separate from validated Shield research. */\n.cc-view[data-view=gold] .gold-live-chart{height:clamp(340px,58vh,620px);min-height:340px;border:1px solid #1d5268;background:#07111d;overflow:hidden}\n.cc-view[data-view=gold] .gold-live-chart iframe{width:100%;height:100%;border:0}\n.cc-view[data-view=gold] .gold-hero{grid-template-columns:minmax(0,1fr) auto}\n@media(max-width:560px){.cc-view[data-view=gold] .gold-live-chart{height:430px;min-height:360px}}\n
+/* UI refinement: professional terminal hierarchy and responsive readability */
+:root{--bg:#080f19;--panel:#101d2b;--panel2:#142638;--line:#263d52;--muted:#9ab0c2;--text:#edf5fb;--cyan:#56d5e8;--blue:#79aee8;--green:#50d6a5;--red:#f07887;--amber:#e9b968;--shadow:0 10px 28px #0004}
+body{background:linear-gradient(145deg,#0a1420,#080e17 62%,#0c1925);font-size:13px}
+body:before{display:none}.top{border-bottom:1px solid #22394e}.top:after{height:1px;width:180px;filter:none}
+.logo{clip-path:none;border:1px solid #2a6276;border-radius:11px;box-shadow:inset 0 0 18px #36d7ff12}
+.panel,.cc-sidebar{border:1px solid #263d52;border-radius:12px;background:linear-gradient(155deg,#122235,#0e1a28);box-shadow:0 8px 24px #0003}
+.panel:before,.panel:after,.panelhead:after,.metric:after,.level:after{display:none}
+.panel{padding:16px}.panelhead h2{letter-spacing:.08em}
+.metric,.level{border:1px solid #263d52;border-radius:10px;background:#0b1724}
+.metric strong{color:#edf8ff;text-shadow:none}
+.pill,.select{clip-path:none;border-radius:8px;border:1px solid #2a4054}
+.btn,.cc-collapse,.cc-mobile-menu{clip-path:none;border-radius:8px;box-shadow:none;text-shadow:none}
+.btn:before{display:none}.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 16px #0004}
+.signalhero{clip-path:none;border-radius:11px;box-shadow:none}.signalhero:after{display:none}
+.live-dot{animation:none}.cc-app{gap:12px}.cc-sidebar{background:#0d1926}
+.cc-sidebrand{padding:18px 15px 15px}.cc-sidebrand strong{font-size:11px;letter-spacing:.12em}
+.cc-nav{gap:4px;padding:12px 8px}.cc-nav button{border-radius:8px;padding:10px 11px;font-size:12px;transition:background .15s,border-color .15s}
+.cc-nav button[aria-current=page]{background:#123044;border-color:#27536a;box-shadow:inset 3px 0 #56d5e8}
+.cc-nav .nav-icon{color:#75cfe0}.cc-sidebar-foot{letter-spacing:.06em;line-height:1.6}
+.cc-toolbar{padding:5px 2px 13px}.cc-page-title{font-size:13px;letter-spacing:.12em}.cc-page-kicker{letter-spacing:.09em}
+.cc-view{scrollbar-color:#31556d #0a1724}.cc-view .panel{margin-bottom:12px}
+.cc-view[data-view=overview]{overflow:auto}.cc-view[data-view=overview] #liveMarkets .livechartframe{border-radius:9px;clip-path:none}
+.cc-view[data-view=gold] .gold-live-chart{border-radius:10px;clip-path:none}
+.cc-view[data-view=gold] .gold-hero{border-radius:11px}.cc-view[data-view=gold] .gold-action{border-radius:8px}
+.table th{font-size:9px;letter-spacing:.09em}.table td{font-variant-numeric:tabular-nums}
+.tag{clip-path:none;border-radius:5px;text-shadow:none}:focus-visible{outline:2px solid #83e8f4!important;outline-offset:3px}
+@media(max-width:760px){.top{margin:0 10px}.cc-app{padding:8px 10px 10px}.cc-toolbar{gap:8px}.cc-view[data-view=overview]{overflow:auto}.cc-view[data-view=overview] #liveMarkets .livechartframe{height:clamp(205px,34vh,290px)}.cc-view .panel{padding:12px}.cc-nav button{min-height:43px}}
+@media(max-width:390px){.brand h1{font-size:12px}.topright{font-size:8px}.cc-view[data-view=overview] #liveMarkets .livechartframe{height:190px}}
+
+</style></head>
 <body><div class="shell">
 <header class="top"><div class="brand"><div class="logo">⌘</div><div><div class="eyebrow">Project command centre / market intelligence</div><h1>COMMAND <span style="color:var(--cyan)">//</span> CONTROL</h1></div></div><div class="topright"><span><i class="live-dot"></i> PUBLIC MARKET FEED</span><span id="clock">Connecting…</span></div></header>
 <div class="layout"><main class="maincol">
