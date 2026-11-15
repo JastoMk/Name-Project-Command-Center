@@ -491,7 +491,7 @@ setInterval(refreshGoldenShieldSnapshot,60000);
  nav.addEventListener('keydown',e=>{if(e.key==='Escape')shell.classList.remove('cc-mobile-open')});
  document.getElementById('ccCollapse').addEventListener('click',()=>{shell.classList.toggle('cc-collapsed');document.getElementById('ccCollapse').textContent=shell.classList.contains('cc-collapsed')?'⇥ EXPAND':'⇤ COLLAPSE'});
  document.getElementById('ccMobileMenu').addEventListener('click',()=>shell.classList.toggle('cc-mobile-open'));
- const goldRefresh=document.getElementById('goldRefreshSnapshot');if(goldRefresh)goldRefresh.addEventListener('click',()=>{goldRefresh.disabled=true;goldRefresh.textContent='REFRESHING…';Promise.resolve(refreshGoldenShieldSnapshot()).finally(()=>{goldRefresh.disabled=false;goldRefresh.textContent='REFRESH RESEARCH'})});\n document.getElementById('ccOpenGoldChart').addEventListener('click',()=>{
+ const goldRefresh=document.getElementById('goldRefreshSnapshot');if(goldRefresh)goldRefresh.addEventListener('click',()=>{goldRefresh.disabled=true;goldRefresh.textContent='REFRESHING…';Promise.resolve(refreshGoldenShieldSnapshot()).finally(()=>{goldRefresh.disabled=false;goldRefresh.textContent='REFRESH RESEARCH'})});\n const openGoldChart=document.getElementById('ccOpenGoldChart');if(openGoldChart)openGoldChart.addEventListener('click',()=>{
   activate('overview');const select=document.getElementById('liveAsset');if(select){select.value='OANDA:XAUUSD';select.dispatchEvent(new Event('change',{bubbles:true}))}
  });
  const hash=location.hash.replace('#','');activate(viewNodes[hash]?hash:'overview');
