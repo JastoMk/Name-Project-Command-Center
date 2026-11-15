@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#07111f">
+<meta name="theme-color" content="#0b1724">
+<meta name="application-name" content="Golden Shield">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Golden Shield">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/command-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icons/command-icon.svg">
 <title>COMMAND // Project Intelligence</title>
 <style>
 :root{color-scheme:dark;--bg:#07111f;--panel:#0d1b2c;--panel2:#11243a;--line:#1c3550;--muted:#8ba4bf;--text:#eaf4ff;--cyan:#42e8d4;--blue:#71aaff;--green:#49d7a2;--red:#ff6e82;--amber:#f2bd62;--shadow:0 18px 50px #0005}
@@ -169,6 +176,12 @@ body:before{display:none}.top{border-bottom:1px solid #22394e}.top:after{height:
 .tag{clip-path:none;border-radius:5px;text-shadow:none}:focus-visible{outline:2px solid #83e8f4!important;outline-offset:3px}
 @media(max-width:760px){.top{margin:0 10px}.cc-app{padding:8px 10px 10px}.cc-toolbar{gap:8px}.cc-view[data-view=overview]{overflow:auto}.cc-view[data-view=overview] #liveMarkets .livechartframe{height:clamp(205px,34vh,290px)}.cc-view .panel{padding:12px}.cc-nav button{min-height:43px}}
 @media(max-width:390px){.brand h1{font-size:12px}.topright{font-size:8px}.cc-view[data-view=overview] #liveMarkets .livechartframe{height:190px}}
+/* Installable app affordance */
+.pwa-install{white-space:nowrap;padding:8px 11px;font-size:10px}
+.pwa-install[hidden]{display:none}
+@media(max-width:760px){.topright{flex-direction:row;align-items:center;gap:7px}.pwa-install{font-size:9px;padding:7px 8px}.topright span:first-child{display:none}}
+@media(display-mode:standalone){.pwa-install{display:none}}
+
 
 
 /* Overview command centre */
@@ -191,7 +204,7 @@ body:before{display:none}.top{border-bottom:1px solid #22394e}.top:after{height:
 
 </style></head>
 <body><div class="shell">
-<header class="top"><div class="brand"><div class="logo">⌘</div><div><div class="eyebrow">Project command centre / market intelligence</div><h1>COMMAND <span style="color:var(--cyan)">//</span> CONTROL</h1></div></div><div class="topright"><span><i class="live-dot"></i> PUBLIC MARKET FEED</span><span id="clock">Connecting…</span></div></header>
+<header class="top"><div class="brand"><div class="logo">⌘</div><div><div class="eyebrow">Project command centre / market intelligence</div><h1>COMMAND <span style="color:var(--cyan)">//</span> CONTROL</h1></div></div><div class="topright"><span><i class="live-dot"></i> PUBLIC MARKET FEED</span><span id="clock">Connecting…</span><button class="btn pwa-install" id="installAppBtn" type="button">↓ INSTALL APP</button></div></header>
 <div class="layout"><main class="maincol">
 <section class="panel"><div class="panelhead"><h2>Market terminal</h2><div class="controls"><select id="symbol" class="select"><option>BTCUSDT</option><option>ETHUSDT</option><option>BNBUSDT</option></select><select id="interval" class="select"><option value="15m">15 MIN</option><option value="1h">1 HOUR</option><option value="4h">4 HOUR</option></select><select id="strategy" class="select" aria-label="Research strategy"><option value="base">BASELINE</option><option value="adx">ADX FILTER</option><option value="vwap">VWAP + RVOL</option><option value="combined">COMBINED</option></select><button class="btn" id="refresh">↻ REFRESH</button></div></div>
 <div class="metrics"><div class="metric"><label>Last price</label><strong id="price">—</strong><small id="change">Waiting for feed</small></div><div class="metric"><label>24h change</label><strong id="change24">—</strong><small>Binance spot</small></div><div class="metric"><label>RSI (14)</label><strong id="rsi">—</strong><small id="rsiState">Momentum</small></div><div class="metric"><label>ATR (14)</label><strong id="atr">—</strong><small>Volatility measure</small></div></div>
@@ -576,6 +589,22 @@ setInterval(refreshGoldenShieldSnapshot,60000);
  });
  const hash=location.hash.replace('#','');activate(viewNodes[hash]?hash:'overview');
  window.addEventListener('hashchange',()=>{const key=location.hash.replace('#','');if(viewNodes[key])activate(key)});
+
+ // Progressive Web App installation. The app remains research-only.
+ let deferredInstallPrompt=null;
+ const installButton=document.getElementById('installAppBtn');
+ const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ const refreshInstallButton=()=>{if(installButton){installButton.hidden=isStandalone();installButton.textContent='↓ INSTALL APP'}};
+ window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;refreshInstallButton()});
+ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;refreshInstallButton();if(installButton)installButton.textContent='APP INSTALLED'});
+ if(installButton)installButton.addEventListener('click',async()=>{
+  if(deferredInstallPrompt){deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice&&choice.outcome==='accepted')installButton.textContent='INSTALLING…';else installButton.textContent='↓ INSTALL APP';return}
+  if(isStandalone()){installButton.hidden=true;return}
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  alert(isIOS?'To install: tap Share, then “Add to Home Screen”.':'To install: open your browser menu (⋮) and choose “Install app” or “Add to Home screen”. If the option is missing, reload this page once while online.');
+ });
+ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Offline app support unavailable:',error)))}
+ refreshInstallButton();
 })();
 </script>
 
